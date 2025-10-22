@@ -1,0 +1,83 @@
+# ============================================================================
+# XLM-RoBERTa TRAINING CONFIGURATION
+# Copy this into Section 3 of your notebook to train ONLY XLM-RoBERTa
+# ============================================================================
+
+# 📁 Data Configuration
+data_path = '/content/adjudications_2025-10-22.csv'
+CSV_PATH = '/content/adjudications_2025-10-22.csv'
+
+TITLE_COL = "Title"
+TEXT_COL  = "Comment"
+SENT_COL  = "Final Sentiment"
+POL_COL   = "Final Polarization"
+
+# 🤖 MODEL CONFIGURATION - XLM-RoBERTa ONLY
+MODEL_CONFIGS = {
+    "xlm_roberta": {"name": "xlm-roberta-base", "desc": "XLM-R base"},
+}
+MODELS_TO_RUN = ["xlm_roberta"]  # ← ONLY XLM-RoBERTa!
+OUT_DIR = "./runs_xlm_roberta"   # ← Separate output directory
+
+# 🎯 Core Training - OPTIMIZED
+MAX_LENGTH = 224
+EPOCHS = 6
+BATCH_SIZE = 12
+LR = 1.5e-5
+WEIGHT_DECAY = 0.02
+WARMUP_RATIO = 0.10
+EARLY_STOP_PATIENCE = 3
+GRAD_ACCUM_STEPS = 3      # Effective batch: 36
+
+# 🎭 Loss Configuration - ENHANCED
+USE_FOCAL_SENTIMENT = True
+USE_FOCAL_POLARITY  = True
+FOCAL_GAMMA_SENTIMENT = 1.0
+FOCAL_GAMMA_POLARITY = 1.5
+LABEL_SMOOTH_SENTIMENT = 0.08
+LABEL_SMOOTH_POLARITY = 0.05
+TASK_LOSS_WEIGHTS = {"sentiment": 1.0, "polarization": 1.2}
+
+# ⚡ Stability Parameters
+MAX_GRAD_NORM = 1.0
+USE_GRADIENT_CHECKPOINTING = True
+
+# ⚖️ Class Weights - CRITICAL FIX (prevents collapse!)
+CLASS_WEIGHT_MULT = {
+    "sentiment": {"negative": 1.20, "neutral": 1.00, "positive": 1.15},
+    "polarization": {"non_polarized": 1.00, "objective": 1.50, "partisan": 1.00}
+}
+MAX_CLASS_WEIGHT = 6.0  # ← Caps objective at 6.0 instead of 10.89
+
+# 📊 Oversampling - SMART STRATEGY
+USE_OVERSAMPLING = True
+USE_JOINT_OVERSAMPLING = True
+USE_SMART_OVERSAMPLING = True
+JOINT_ALPHA = 0.50
+JOINT_OVERSAMPLING_MAX_MULT = 4.0
+OBJECTIVE_BOOST_MULT = 2.5  # Extra boost for rare objective class
+
+# 🏗️ Architecture - ENHANCED
+HEAD_HIDDEN = 384
+HEAD_DROPOUT = 0.20
+REP_POOLING = "last4_mean"
+HEAD_LAYERS = 2
+
+# 🔧 Regularization - OPTIMIZED
+USE_RDROP = True
+RDROP_ALPHA = 0.4
+RDROP_WARMUP_EPOCHS = 1
+USE_LLRD = True
+LLRD_DECAY = 0.95
+HEAD_LR_MULT = 2.0
+
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# End timing for section 3
+timer.end_section("SECTION 3: Configuration Setup")
+timer.start_section("SECTION 4: Data Loading & Preprocessing")
+
+print(f"✅ XLM-RoBERTa Configuration Loaded")
+print(f"📊 Expected Training Time: ~35-40 minutes")
+print(f"🎯 Target Performance: 65-70% macro-F1")
+
