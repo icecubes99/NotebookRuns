@@ -2049,3 +2049,303 @@ The comprehensive analysis document is ready! Would you like me to continue with
 2. ✅ Each analysis labeled with date + run number ✅
 3. ✅ After analysis → apply fixes to `MBERT_TRAINING.ipynb` (NEXT STEP!)
 4. ✅ Repeat this instruction every chat for memory ✅
+
+---
+
+---
+
+---
+
+# 📊 RUN #5 ANALYSIS — **CATASTROPHIC REGRESSION** ❌💥
+
+**Date:** October 23, 2025  
+**Run Number:** #5  
+**Configuration:** Targeted Fixes + Objective Push  
+**Training Time:** 70 minutes (1h 10m)  
+**Status:** ⚠️ **MAJOR FAILURE - WORST RUN SINCE R1** ⚠️
+
+---
+
+## 📉 EXECUTIVE SUMMARY: COMPLETE SYSTEM COLLAPSE
+
+**RUN #5 IS A DISASTER!** The "Targeted Fixes + Objective Push" strategy BACKFIRED catastrophically:
+
+- **Macro-F1: 58.54%** (down from 62.06% in Run #4, **-3.52% REGRESSION** 💥)
+- **Negative F1: 54.7%** (down from 60.9%, **-6.2%** - recall WORSENED to 40.3%!)
+- **Non-Polarized F1: 56.3%** (down from 64.5%, **-8.2%** - MASSIVE COLLAPSE)
+- **Objective F1: 42.2%** (essentially flat from 42.4%, **-0.2%** - push FAILED)
+- **Early stopping triggered at epoch 15/20** (model gave up!)
+
+This is the **WORST performance since Run #1 (58.5%)** and represents a complete failure of the aggressive tuning strategy. Every single targeted fix made things worse.
+
+---
+
+## 🔴 THE DAMAGE: Run-by-Run Comparison
+
+| Metric          | Run #5     | Run #4     | Run #3     | Run #2     | Run #1     | Change vs R4  | Status                      |
+| --------------- | ---------- | ---------- | ---------- | ---------- | ---------- | ------------- | --------------------------- |
+| **Macro-F1**    | **58.54%** | **62.06%** | **60.55%** | **60.97%** | **58.50%** | **-3.52%** ❌ | **CATASTROPHIC REGRESSION** |
+| Sentiment F1    | 57.14%     | 61.41%     | 61.83%     | 63.84%     | 59.19%     | -4.27% ❌     | Worse than R1!              |
+| Polarization F1 | 59.95%     | 62.71%     | 59.28%     | 58.11%     | 57.81%     | -2.76% ❌     | Lost all R4 gains           |
+| Training Time   | 70m        | 63m        | 66m        | 92m        | 85m        | +7m           | Stopped early (Epoch 15/20) |
+
+---
+
+## 💀 SENTIMENT TASK: TOTAL COLLAPSE
+
+**Accuracy:** 54.58% (down from 59.06% in R4, -4.48%)
+
+### Per-Class Performance
+
+| Class        | Precision | Recall | F1        | Support | Run #4 F1 | Run #3 F1 | Change vs R4 | Status                              |
+| ------------ | --------- | ------ | --------- | ------- | --------- | --------- | ------------ | ----------------------------------- |
+| **Negative** | 85.2%     | 40.3%  | **54.7%** | 886     | 60.9%     | 63.8%     | **-6.2%** ❌ | **RECALL CRISIS WORSENED** (40.3%!) |
+| **Neutral**  | 36.9%     | 86.5%  | **51.8%** | 401     | 53.4%     | 53.5%     | **-1.6%** ❌ | Slight regression                   |
+| **Positive** | 81.8%     | 53.8%  | **64.9%** | 208     | 70.0%     | 68.2%     | **-5.1%** ❌ | Lost R4 improvements                |
+
+### 🔍 **Sentiment Analysis:**
+
+1. **Negative (54.7% F1):** ❌ **COMPLETE FAILURE OF PRIMARY OBJECTIVE**
+
+   - **Recall WORSENED from 47.5% to 40.3%** (the exact thing we tried to fix!)
+   - Boosting class weight from 1.10 to 1.30 + focal gamma to 2.7 **destabilized training**
+   - Precision stayed high (85.2%) but recall dropped by **7.2 percentage points**
+   - Lost 6.2% F1 from R4 - **our worst negative performance across all runs**
+   - **The aggressive fixes backfired spectacularly**
+
+2. **Neutral (51.8% F1):** ❌ **Plateau broken in wrong direction**
+
+   - Dropped 1.6% F1 from R4's 53.4%
+   - Label smoothing increase (0.10 → 0.12) didn't help precision (still 36.9%)
+   - Reducing neutral boost (3.5x → 3.0x) removed critical training signal
+   - Now at **WORST neutral F1 since Run #1** (which had 49.4%)
+
+3. **Positive (64.9% F1):** ❌ **Lost all R4 gains**
+
+   - Down 5.1% F1 from R4's 70.0%
+   - Recall dropped from 67.3% to 53.8% (-13.5%!)
+   - Model became too cautious across the board
+   - Back to R2/R3 performance levels
+
+---
+
+## 💥 POLARIZATION TASK: MASSIVE NON-POLARIZED COLLAPSE
+
+**Accuracy:** 72.24% (down from 73.58% in R4, -1.34%)
+
+### Per-Class Performance
+
+| Class             | Precision | Recall | F1        | Support | Run #4 F1 | Run #3 F1 | Change vs R4 | Status                            |
+| ----------------- | --------- | ------ | --------- | ------- | --------- | --------- | ------------ | --------------------------------- |
+| **Non-Polarized** | 64.6%     | 49.9%  | **56.3%** | 435     | 64.5%     | 62.7%     | **-8.2%** ❌ | **CATASTROPHIC 8.2% DROP**        |
+| **Objective**     | 37.7%     | 47.8%  | **42.2%** | 90      | 42.4%     | 37.0%     | **-0.2%** ➡️ | Flat despite 10x boost (FAILURE!) |
+| **Partisan**      | 78.5%     | 84.5%  | **81.4%** | 970     | 81.2%     | 78.1%     | **+0.2%** ➡️ | Only class that didn't collapse   |
+
+### 🔍 **Polarization Analysis:**
+
+1. **Non-Polarized (56.3% F1):** ❌ **CATASTROPHIC 8.2% COLLAPSE**
+
+   - **Worst non-polarized performance across all 5 runs**
+   - Recall dropped from 72.4% to 49.9% (**-22.5%!**)
+   - Precision stayed flat (64.6% vs 64.5%)
+   - The aggressive changes completely destabilized this class
+   - Lost **ALL progress** from R2-R4 (62.1% → 62.7% → 64.5% → 56.3%)
+
+2. **Objective (42.2% F1):** ❌ **PUSH TO 50% COMPLETELY FAILED**
+
+   - Essentially flat from R4 (42.4% → 42.2%, -0.2%)
+   - Restoring 10x boost (from 8.5x) **did nothing**
+   - Recall stayed at 47.8% (was 40.0% in R4, but precision dropped)
+   - The 10x boost proved ineffective - model can't learn from duplicates alone
+   - **12.8% below target (55%)** - no progress toward 50% milestone
+
+3. **Partisan (81.4% F1):** ✅ **Only stable class**
+
+   - Tiny +0.2% gain (81.2% → 81.4%)
+   - Stable precision (78.5%) and recall (84.5%)
+   - This class is resistant to configuration changes (good baseline)
+   - Still 6.8% below R2's peak (88.2%)
+
+---
+
+## 🔥 ROOT CAUSE ANALYSIS: Why Did Everything Fail?
+
+### 1. **Over-Aggressive Class Weight Changes** 💥
+
+- **Negative class weight: 1.10 → 1.30** (+18% increase)
+  - **RESULT:** Recall dropped from 47.5% to 40.3% (-7.2%)
+  - **Why:** Too much weight destabilized gradient flow, model became overly conservative
+  - **Lesson:** Class weights have non-linear effects - small changes can cause big instability
+
+### 2. **Label Smoothing Overreach** 📉
+
+- **Sentiment label smoothing: 0.10 → 0.12** (+20% increase)
+  - **RESULT:** Neutral precision stayed at 36.9% (no improvement), F1 dropped
+  - **Why:** Higher smoothing without corresponding architectural changes just adds noise
+  - **Lesson:** Label smoothing alone can't fix precision issues
+
+### 3. **Task Weight Imbalance** ⚖️
+
+- **Sentiment task weight: 1.0 → 1.1** while polarity stayed at 1.4
+  - **RESULT:** Sentiment F1 dropped 4.27%, Polarization dropped 2.76%
+  - **Why:** Changing task weights mid-convergence destabilizes multi-task learning
+  - **Lesson:** Task weights should remain stable once a good balance is found
+
+### 4. **Oversampling Confusion** 🔄
+
+- **Objective boost: 8.5x → 10.0x** (INCREASE)
+- **Neutral boost: 3.5x → 3.0x** (DECREASE)
+  - **RESULT:** Objective flat (+0.0%), Neutral dropped (-1.6%), Non-polarized COLLAPSED (-8.2%)
+  - **Why:** Contradictory signals - pushing one class while reducing another created training instability
+  - **Lesson:** R4's 8.5x/3.5x balance was optimal; changing it broke everything
+
+### 5. **Focal Loss Creep** 🎯
+
+- **Sentiment focal gamma: 2.5 → 2.7**
+  - **RESULT:** Negative recall WORSENED (47.5% → 40.3%)
+  - **Why:** Higher gamma focuses MORE on hard examples, but negative class doesn't have hard examples - it has a threshold problem
+  - **Lesson:** Focal loss doesn't fix recall issues caused by conservative decision boundaries
+
+### 6. **Early Stopping at Epoch 15/20** ⏹️
+
+- Model stopped 5 epochs early - validation performance wasn't improving
+- **Indicates:** The configuration was fundamentally flawed, not just undertrained
+- Training loss was still decreasing but validation metrics degrading = **overfitting or instability**
+
+---
+
+## 📊 CRITICAL INSIGHTS
+
+### ❌ **What We Learned (The Hard Way):**
+
+1. **Run #4's configuration was near-optimal** - tweaking it broke everything
+2. **Negative recall can't be fixed with class weights alone** - it's a decision boundary problem
+3. **10x objective boost is too much** - model can't learn from synthetic duplicates
+4. **Label smoothing doesn't fix precision** - it just softens outputs
+5. **Multi-task weights should NOT be changed mid-convergence** - creates instability
+6. **Contradictory oversampling signals destroy training** (boost objective, reduce neutral = chaos)
+
+### ✅ **What Actually Works (Evidence from R4):**
+
+1. **Stable training configuration:** 20 epochs, 2.5e-5 LR, patience 8
+2. **Moderate focal loss:** 2.5 sentiment, 3.5 polarity (sweet spot)
+3. **Balanced oversampling:** 8.5x objective, 3.5x neutral (R4's balance)
+4. **Consistent task weights:** 1.0 sentiment, 1.4 polarity (don't change!)
+5. **Moderate class weights:** 1.10 negative is better than 1.30
+
+---
+
+## 🎯 STRATEGIC RECOMMENDATIONS FOR RUN #6
+
+**Philosophy:** **RETURN TO R4 STABILITY + SURGICAL FIXES**
+
+### Core Strategy: "R4 Restoration with Precision Targeting"
+
+**Stop trying to fix everything at once. Return to R4's proven foundation and make ONE targeted change.**
+
+### Run #6 Configuration Changes (vs R4):
+
+#### ✅ **KEEP FROM R4 (Proven Stable):**
+
+- Epochs: 20 ✅
+- LR: 2.5e-5 ✅
+- Early Stop Patience: 8 ✅
+- Focal Gamma Sentiment: 2.5 ✅ (NOT 2.7!)
+- Focal Gamma Polarity: 3.5 ✅
+- Label Smoothing Sentiment: 0.10 ✅ (NOT 0.12!)
+- Task Weights: 1.0 / 1.4 ✅ (NOT 1.1 / 1.4!)
+- Class Weight Negative: 1.10 ✅ (NOT 1.30!)
+- Objective Boost: 8.5x ✅ (NOT 10x!)
+- Neutral Boost: 3.5x ✅ (NOT 3.0x!)
+
+#### 🎯 **ONE SURGICAL CHANGE:**
+
+**TARGET: Fix Negative Recall (40.3% → 50%+) WITHOUT destabilizing other classes**
+
+**Strategy:** Negative recall is NOT a class weight problem - it's a **decision boundary problem**. The model is too conservative in predicting negative.
+
+**Single Change Option A: Gradient Flow Enhancement**
+
+- Keep ALL R4 loss/oversampling parameters
+- Reduce `MAX_GRAD_NORM: 0.5 → 1.0` (allow stronger gradient updates for negative class)
+- Increase `LLRD_DECAY: 0.90 → 0.92` (less aggressive layer decay, more uniform learning)
+- Rationale: Maybe gradients for negative class are being clipped too much, preventing proper learning
+
+**Single Change Option B: Architecture Capacity**
+
+- Keep ALL R4 loss/oversampling parameters
+- Increase `HEAD_HIDDEN: 768 → 1024` (more capacity to learn negative patterns)
+- Rationale: Maybe negative class needs more model capacity, not more loss weight
+
+**Single Change Option C: Subtle Negative Boost (Conservative)**
+
+- Keep ALL other R4 parameters
+- Increase `NEGATIVE class weight: 1.10 → 1.15` (tiny +4.5% bump, not +18%)
+- Rationale: R5's 1.30 was too aggressive; 1.15 might be the sweet spot
+
+### 🎯 **RECOMMENDED: Option A (Gradient Flow Enhancement)**
+
+**Why:**
+
+1. Addresses the root cause (gradient clipping may prevent negative class learning)
+2. Doesn't change any loss functions or sampling strategies (proven stable in R4)
+3. Low risk - if gradients are fine, this won't hurt much
+4. Could benefit ALL classes by improving gradient flow
+
+**Expected Results:**
+
+- Overall Macro-F1: **62-64%** (maintain or slightly improve R4)
+- Negative F1: **62-65%** (improve recall from 47.5% to 50%+)
+- Other classes: **Maintain R4 levels** (minimal impact)
+- Objective F1: **42-45%** (maintain R4's breakthrough)
+- Partisan F1: **81-83%** (maintain stability)
+
+---
+
+## 📈 5-Run Performance Trajectory
+
+```
+Run #1 (Baseline Optimized):     58.50% Macro-F1
+Run #2 (Aggressive):             60.97% Macro-F1 (+2.47%)
+Run #3 (Overcorrection):         60.55% Macro-F1 (-0.42%)
+Run #4 (Selective Rebalancing):  62.06% Macro-F1 (+1.51%) 🏆 BEST
+Run #5 (Targeted Fixes):         58.54% Macro-F1 (-3.52%) 💥 DISASTER
+```
+
+**Key Pattern:** Every time we get aggressive with multiple changes, we regress. R4 succeeded because it was **selective** (kept R2 stability, moderate boosts). R5 failed because it was **aggressive** (changed everything).
+
+---
+
+## 🚨 CRITICAL DECISION POINT
+
+**We are at a crossroads:**
+
+**Path A: Conservative Recovery** (RECOMMENDED)
+
+- Restore R4 configuration completely
+- Apply ONE surgical fix (gradient flow or minimal class weight bump)
+- Target: 62-65% Macro-F1 (maintain R4, fix negative recall)
+
+**Path B: Architectural Rethink**
+
+- R4 might be hitting model capacity limits
+- Consider changing model architecture (different pooling, attention layers)
+- Higher risk, potentially higher reward
+
+**Path C: Accept R4 as Peak**
+
+- 62.06% Macro-F1 might be the ceiling for this dataset with mBERT
+- Focus on XLM-RoBERTa for better multilingual performance
+- Use R4 model for production
+
+**RECOMMENDATION:** Path A with gradient flow enhancement. R5 proved that aggressive tuning destroys performance. Return to R4's proven foundation and make minimal, targeted adjustments.
+
+---
+
+**Run #5 Confirmed as MAJOR FAILURE** ❌  
+**Training time:** 70 minutes (stopped early at epoch 15)  
+**Overall Macro-F1:** 58.54% (-3.52% vs R4, back to R1 levels)  
+**Key losses:** Negative -6.2%, Non-polarized -8.2%, everything regressed  
+**Next action:** **RESTORE R4 + GRADIENT FLOW ENHANCEMENT**
+
+---
