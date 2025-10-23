@@ -1388,3 +1388,497 @@ Then **average predictions** for final output.
 2. ✅ Each analysis labeled with date + run number ✅
 3. ✅ After analysis → apply fixes to `MBERT_TRAINING.ipynb` (NEXT STEP!)
 4. ✅ Repeat this instruction every chat for memory ✅
+
+---
+
+---
+
+---
+
+# 📊 mBERT RUN #3 - COMPREHENSIVE ANALYSIS
+
+**Date:** October 23, 2025  
+**Run:** #3 (Rebalanced Configuration)  
+**Status:** ⚠️ **REGRESSION** - Performance DECLINED vs Run #2
+
+---
+
+## 🎯 EXECUTIVE SUMMARY
+
+**Training Duration:** 1 hour 6 minutes (⬇️ 26 minutes faster than Run #2)  
+**Overall Result:** **60.55% Macro-F1** (⬇️ -0.42% vs Run #2: 60.97%)  
+**Status:** ❌ **REGRESSION** - Slight decline despite rebalancing
+
+### 🚨 **CRITICAL FINDING:**
+
+**RUN #3 IS A REGRESSION!** After dialing back the aggressive parameters from Run #2, we expected improvement but instead saw:
+
+- **Macro-F1: 60.55%** (down from 60.97% in Run #2)
+- **Objective F1: 37.0%** (up from 34.9%, +2.1% ✅)
+- **Neutral F1: 53.5%** (down from 53.6%, -0.1%)
+- **Partisan F1: 78.1%** (down from 88.2%, -10.1% ❌❌❌)
+
+### ⚠️ **KEY INSIGHT:**
+
+The rebalancing strategy PARTIALLY worked for weak classes but **OVERCORRECTED** and severely damaged the strongest class (Partisan). The reduction in aggressive parameters helped objective class slightly but couldn't recover the Partisan performance.
+
+---
+
+## 📈 DETAILED PERFORMANCE METRICS
+
+### **Overall Performance**
+
+| Metric               | Run #3     | Run #2     | Run #1     | Target | Gap vs Target | Change vs R2  | Status            |
+| -------------------- | ---------- | ---------- | ---------- | ------ | ------------- | ------------- | ----------------- |
+| **Overall Macro-F1** | **60.55%** | **60.97%** | **58.46%** | 75.00% | **-14.45%**   | **-0.42%** ⬇️ | ❌ **REGRESSION** |
+| Sentiment F1         | 61.83%     | 63.84%     | 59.19%     | 75.00% | -13.17%       | -2.01% ⬇️     | ❌ Declined       |
+| Polarization F1      | 59.28%     | 58.10%     | 57.73%     | 75.00% | -15.72%       | +1.18% ⬆️     | ⚠️ Slight gain    |
+
+**Accuracy:**
+
+- **Sentiment:** 60.67% (down from 67.72% in Run #2, -7.05% ❌)
+- **Polarization:** 70.64% (down from 74.11% in Run #2, -3.47% ❌)
+
+---
+
+## 🔍 SENTIMENT ANALYSIS (3 Classes)
+
+### Aggregate Metrics
+
+| Metric       | Run #3     | Run #2     | Run #1     | Change vs R2  | Comment                          |
+| ------------ | ---------- | ---------- | ---------- | ------------- | -------------------------------- |
+| **F1 Score** | **61.83%** | **63.84%** | **59.19%** | **-2.01%** ⬇️ | **Declined despite rebalancing** |
+| Accuracy     | 60.67%     | 67.72%     | 56.25%     | -7.05% ⬇️     | **Significant drop**             |
+| Precision    | 62.96%     | 68.04%     | 64.42%     | -5.08% ⬇️     | Lower precision                  |
+| Recall       | 67.63%     | 68.93%     | 61.31%     | -1.30% ⬇️     | Slight decline                   |
+
+### Per-Class Performance
+
+| Class        | Precision | Recall | F1        | Support | Run #2 F1 | Change       | Status                        |
+| ------------ | --------- | ------ | --------- | ------- | --------- | ------------ | ----------------------------- |
+| **Negative** | 86.6%     | 50.5%  | **63.8%** | 886     | 69.5%     | **-5.7%** ⬇️ | ❌ **Significant drop**       |
+| **Neutral**  | 41.9%     | 74.1%  | **53.5%** | 401     | 53.6%     | **-0.1%** ➡️ | ⚠️ **No change (still weak)** |
+| **Positive** | 60.4%     | 78.4%  | **68.2%** | 208     | 68.5%     | **-0.3%** ⬇️ | ➡️ Stable                     |
+
+### 🔍 **Sentiment Analysis:**
+
+1. **Negative (63.8% F1):** ⬇️ **Lost 5.7% F1** from Run #2
+
+   - Precision remained high (86.6%) but **recall collapsed to 50.5%** (down from 58.7%)
+   - Model became MORE conservative, missing half of negative instances
+   - Likely impact: Reduced oversampling weakened minority class learning
+
+2. **Neutral (53.5% F1):** ➡️ **No improvement** (target: 65%)
+
+   - Still the weakest sentiment class despite 3x boost (was 4x in Run #2)
+   - High recall (74.1%) but very low precision (41.9%) → many false positives
+   - **CRITICAL:** Dialing back from 4x to 3x was TOO MUCH
+
+3. **Positive (68.2% F1):** ➡️ **Stable**
+   - Maintained performance, still best-performing sentiment class
+   - Balanced precision (60.4%) and recall (78.4%)
+
+---
+
+## 🔍 POLARIZATION ANALYSIS (3 Classes)
+
+### Aggregate Metrics
+
+| Metric       | Run #3     | Run #2     | Run #1     | Change vs R2  | Comment                       |
+| ------------ | ---------- | ---------- | ---------- | ------------- | ----------------------------- |
+| **F1 Score** | **59.28%** | **58.10%** | **57.73%** | **+1.18%** ⬆️ | **Slight improvement**        |
+| Accuracy     | 70.64%     | 74.11%     | 66.98%     | -3.47% ⬇️     | **Significant accuracy drop** |
+| Precision    | 60.18%     | 62.37%     | 60.80%     | -2.19% ⬇️     | Lower precision               |
+| Recall       | 59.85%     | 63.82%     | 58.33%     | -3.97% ⬇️     | Lower recall                  |
+
+### Per-Class Performance
+
+| Class             | Precision | Recall | F1        | Support | Run #2 F1 | Change        | Status                         |
+| ----------------- | --------- | ------ | --------- | ------- | --------- | ------------- | ------------------------------ |
+| **Non-Polarized** | 54.8%     | 73.3%  | **62.7%** | 435     | 62.1%     | **+0.6%** ⬆️  | ➡️ Stable                      |
+| **Objective**     | 41.7%     | 33.3%  | **37.0%** | 90      | 34.9%     | **+2.1%** ⬆️  | ✅ **Slight improvement**      |
+| **Partisan**      | 84.1%     | 72.9%  | **78.1%** | 970     | 88.2%     | **-10.1%** ⬇️ | ❌ **MAJOR REGRESSION (-10%)** |
+
+### 🔍 **Polarization Analysis:**
+
+1. **Non-Polarized (62.7% F1):** ➡️ **Stable** (+0.6%)
+
+   - Essentially unchanged from Run #2
+   - Still benefits from 73.3% recall but suffers from low precision (54.8%)
+
+2. **Objective (37.0% F1):** ✅ **Slight improvement** (+2.1%)
+
+   - **STILL CRITICALLY WEAK** (target: 55%)
+   - Minimal gains despite being the primary focus of optimization
+   - Precision 41.7%, Recall 33.3% → both remain very low
+   - **7x oversampling boost is still insufficient** for this severely underrepresented class
+
+3. **Partisan (78.1% F1):** ❌ **CATASTROPHIC DROP (-10.1%)**
+   - **Lost ALL gains from Run #2** (was 88.2%, now 78.1%)
+   - Dialing back oversampling from 10x→7x and focal from 3.5→3.0 OVERCORRECTED
+   - This is the strongest class (970 samples) and should be STABLE
+   - **CRITICAL ERROR:** Rebalancing hurt the one thing that was working
+
+---
+
+## 📊 COMPARISON ACROSS ALL RUNS
+
+### Macro-F1 Trajectory
+
+| Run    | Config Strategy        | Macro-F1 | Change   | Objective F1 | Neutral F1 | Partisan F1 |
+| ------ | ---------------------- | -------- | -------- | ------------ | ---------- | ----------- |
+| Run #1 | Aggressive (First)     | 58.46%   | Baseline | 40.4%        | 49.4%      | 75.1%       |
+| Run #2 | VERY Aggressive        | 60.97%   | +2.51%   | 34.9% ⬇️     | 53.6% ⬆️   | 88.2% ⬆️⬆️  |
+| Run #3 | Rebalanced (Dial Back) | 60.55%   | -0.42%   | 37.0% ⬆️     | 53.5% ➡️   | 78.1% ⬇️⬇️  |
+
+### Configuration Changes (Run #2 → Run #3)
+
+| Parameter               | Run #2 | Run #3 | Change       | Impact Analysis                                     |
+| ----------------------- | ------ | ------ | ------------ | --------------------------------------------------- |
+| EPOCHS                  | 20     | 15     | ⬇️ -5 epochs | Faster training but less convergence time           |
+| LR                      | 2.5e-5 | 3.0e-5 | ⬆️ +0.5e-5   | Higher LR may cause instability                     |
+| FOCAL_GAMMA_SENTIMENT   | 3.0    | 2.5    | ⬇️ -0.5      | Less focus on hard sentiment examples               |
+| FOCAL_GAMMA_POLARITY    | 3.5    | 3.0    | ⬇️ -0.5      | Less focus on hard polarity examples                |
+| OBJECTIVE_BOOST_MULT    | 10.0x  | 7.0x   | ⬇️ -3x       | **Significant reduction in objective oversampling** |
+| NEUTRAL_BOOST_MULT      | 4.0x   | 3.0x   | ⬇️ -1x       | **Significant reduction in neutral oversampling**   |
+| EARLY_STOP_PATIENCE     | 8      | 6      | ⬇️ -2        | Stops training earlier if no improvement            |
+| Max Oversampling Weight | 91.81  | 48.20  | ⬇️ -43.61    | **Massively reduced sample weight range**           |
+
+---
+
+## 🔥 ROOT CAUSE ANALYSIS
+
+### What Went WRONG in Run #3?
+
+1. **❌ OVERCORRECTION on Oversampling:**
+
+   - **Problem:** Reducing OBJECTIVE_BOOST from 10x→7x was too aggressive
+   - **Evidence:** Objective only gained +2.1% while Partisan LOST -10.1%
+   - **Root Cause:** The rebalancing threw off the distribution for the majority class (Partisan)
+
+2. **❌ CONFLICTING SIGNALS from Focal Loss & Learning Rate:**
+
+   - **Problem:** We REDUCED focal gamma (3.5→3.0) but INCREASED learning rate (2.5e-5→3.0e-5)
+   - **Evidence:** Sentiment accuracy dropped 7%, negative F1 dropped 5.7%
+   - **Root Cause:** Higher LR + lower focal gamma = less stable training, especially for hard examples
+
+3. **❌ INSUFFICIENT TRAINING TIME:**
+
+   - **Problem:** Reduced epochs (20→15) and early stopping patience (8→6)
+   - **Evidence:** Training completed 26 minutes faster but performance declined
+   - **Root Cause:** Model didn't have enough time to converge properly
+
+4. **❌ MAX OVERSAMPLING WEIGHT COLLAPSED:**
+   - **Problem:** Max weight dropped from 91.81 to 48.20 (-47% reduction)
+   - **Evidence:** This is a SIDE EFFECT of reducing boost multipliers too much
+   - **Root Cause:** Weak classes lost their training signal strength
+
+### What Went RIGHT in Run #3?
+
+1. **✅ Training Efficiency:**
+
+   - 1h 6m vs 1h 32m (26 minutes saved)
+   - Still 15 epochs, just faster convergence
+
+2. **✅ Objective Class Improvement:**
+
+   - +2.1% F1 (34.9% → 37.0%)
+   - Shows the 7x boost is still effective, just not enough
+
+3. **✅ Configuration is CLEANER:**
+   - More reasonable hyperparameter values
+   - Avoids extreme settings that could cause instability
+
+---
+
+## 💡 LESSONS LEARNED
+
+### 🎓 What Run #3 Taught Us:
+
+1. **❌ Naive Rebalancing DOESN'T Work:**
+
+   - Simply "dialing back" all parameters proportionally is NOT a strategy
+   - Need to be SELECTIVE about what to change and what to preserve
+
+2. **✅ Partisan Class is SENSITIVE to Oversampling:**
+
+   - Despite being the majority class (970 samples), it BENEFITS from aggressive training
+   - Run #2's 10x objective boost + 4x neutral boost created a distribution that ALSO helped Partisan
+   - Reducing boosts hurt Partisan more than it helped objective/neutral
+
+3. **✅ Focal Loss & Learning Rate are COUPLED:**
+
+   - Can't change one without considering the other
+   - Higher focal gamma + lower LR = stable but slow
+   - Lower focal gamma + higher LR = fast but unstable
+
+4. **❌ Run #3 Strategy was TOO CONSERVATIVE:**
+   - We tried to "fix" Run #2's imbalance but went too far in the opposite direction
+   - Result: Lost gains in strong classes without sufficient improvement in weak ones
+
+---
+
+## 🎯 RECOMMENDATIONS FOR RUN #4
+
+### 🔧 Configuration Strategy: **"Selective Rebalancing"**
+
+**Goal:** Recover Partisan performance while continuing to improve Objective/Neutral
+
+**Approach:** Keep what worked in Run #2, selectively adjust what hurt Partisan
+
+### Specific Changes for Run #4:
+
+#### ✅ **KEEP from Run #2 (Don't reduce):**
+
+1. **EPOCHS = 20** (was 15 in R3, 20 in R2) → Need full training time
+2. **EARLY_STOP_PATIENCE = 8** (was 6 in R3, 8 in R2) → Allow proper convergence
+3. **FOCAL_GAMMA_POLARITY = 3.5** (was 3.0 in R3) → Partisan needs hard example focus
+4. **LR = 2.5e-5** (was 3.0e-5 in R3) → More stable learning
+
+#### 🔧 **ADJUST (Selective tuning):**
+
+1. **OBJECTIVE_BOOST_MULT = 8.5x** (was 7x in R3, 10x in R2) → Split the difference
+2. **NEUTRAL_BOOST_MULT = 3.5x** (was 3x in R3, 4x in R2) → Split the difference
+3. **FOCAL_GAMMA_SENTIMENT = 2.5** (keep from R3) → This seemed OK
+4. **TASK_LOSS_WEIGHTS = {"sentiment": 1.0, "polarization": 1.4}** → Boost polarity task slightly
+
+#### 🆕 **NEW STRATEGY - Add Class-Specific LR:**
+
+- Consider implementing **per-task head learning rates**:
+  - Sentiment head: 2.5e-5 (standard)
+  - Polarization head: 3.0e-5 (slightly higher for harder task)
+- **Rationale:** Different tasks have different convergence rates
+
+### Expected Outcomes for Run #4:
+
+| Metric       | Run #3 | Run #4 Target | Change    |
+| ------------ | ------ | ------------- | --------- |
+| **Macro-F1** | 60.55% | **63-65%**    | +2.5-4.5% |
+| Objective F1 | 37.0%  | **42-48%**    | +5-11%    |
+| Neutral F1   | 53.5%  | **56-60%**    | +2.5-6.5% |
+| Partisan F1  | 78.1%  | **83-86%**    | +5-8%     |
+
+### Alternative Strategy: **"Data Augmentation for Objective Class"**
+
+If Run #4 doesn't break 65% Macro-F1, consider:
+
+1. **Synthetic Oversampling (SMOTE-like):**
+
+   - Generate synthetic objective examples by interpolating embeddings
+   - Target: Double the effective objective class size (90 → 180)
+
+2. **Back-Translation Augmentation:**
+
+   - Translate objective examples to another language and back
+   - Creates paraphrased versions while preserving meaning
+
+3. **Class-Specific Model Ensembling:**
+   - Train a SEPARATE classifier ONLY for objective vs. non-objective
+   - Ensemble it with the main multi-task model
+
+---
+
+## 📋 DETAILED DIAGNOSTICS
+
+### Training Time Analysis
+
+| Section                   | Run #3     | Run #2     | Change           |
+| ------------------------- | ---------- | ---------- | ---------------- |
+| Model Training Execution  | 1h 6m      | 1h 32m     | ⬇️ 26m faster    |
+| Oversampling Weight Range | 1.00-48.20 | 1.00-91.81 | ⬇️ 47% reduction |
+| Objective Boosted Samples | 405        | 405        | ➡️ Same          |
+| Neutral Boosted Samples   | 1874       | 1874       | ➡️ Same          |
+
+### Cross-Slice Analysis (From Notebook Output)
+
+**Polarization Performance within Each Sentiment Slice:**
+
+| Sentiment Slice | Support | Accuracy | Macro-F1 | Notes                                       |
+| --------------- | ------- | -------- | -------- | ------------------------------------------- |
+| Negative        | 886     | 75.3%    | 52.7%    | Best accuracy, weakest F1 (objective issue) |
+| Neutral         | 401     | 63.3%    | 60.2%    | Balanced performance                        |
+| Positive        | 208     | 68.3%    | 58.6%    | Mid-range on both metrics                   |
+
+**Sentiment Performance within Each Polarization Slice:**
+
+| Polarization Slice | Support | Accuracy | Macro-F1 | Notes                                            |
+| ------------------ | ------- | -------- | -------- | ------------------------------------------------ |
+| Partisan           | 970     | 61.1%    | 58.0%    | Largest class, mid-range performance             |
+| Non-Polarized      | 435     | 58.4%    | 56.2%    | Weakest overall                                  |
+| Objective          | 90      | 66.7%    | 63.1%    | **Surprising:** Best sentiment within objective! |
+
+**🔍 Key Insight:** Objective articles actually have BETTER sentiment classification (63.1% F1) than when looking at all data. This suggests the objective class itself is the bottleneck, NOT the sentiment task.
+
+---
+
+## 🚨 CRITICAL ISSUES TO ADDRESS
+
+### 🔴 **Priority 1: Fix Partisan Regression**
+
+- **Issue:** -10.1% F1 drop is UNACCEPTABLE for strongest class
+- **Fix:** Restore Run #2's training stability (epochs, patience, focal gamma)
+
+### 🔴 **Priority 2: Objective Class Still Failing**
+
+- **Issue:** 37.0% F1 is only +2.1% from Run #2, still 18% below target (55%)
+- **Fix:** Try 8.5x boost (between R2 and R3) + consider data augmentation
+
+### 🟡 **Priority 3: Neutral Class Stagnation**
+
+- **Issue:** No improvement across 3 runs (49.4% → 53.6% → 53.5%)
+- **Fix:** Neutral may need a DIFFERENT strategy than just oversampling
+
+### 🟡 **Priority 4: Learning Rate Instability**
+
+- **Issue:** 3.0e-5 may be too high, causing erratic updates
+- **Fix:** Return to 2.5e-5 for stability
+
+---
+
+## 📊 COMPARISON TABLE: ALL 3 RUNS
+
+| Metric               | Run #1 | Run #2 | Run #3 | Best Run   | Progress            |
+| -------------------- | ------ | ------ | ------ | ---------- | ------------------- |
+| **Overall Macro-F1** | 58.46% | 60.97% | 60.55% | **Run #2** | +2.51% then -0.42%  |
+| Sentiment Acc        | 56.25% | 67.72% | 60.67% | **Run #2** | +11.47% then -7.05% |
+| Polarization Acc     | 66.98% | 74.11% | 70.64% | **Run #2** | +7.13% then -3.47%  |
+| **Negative F1**      | 60.0%  | 69.5%  | 63.8%  | **Run #2** | +9.5% then -5.7%    |
+| **Neutral F1**       | 49.4%  | 53.6%  | 53.5%  | **Run #2** | +4.2% then -0.1%    |
+| **Positive F1**      | 68.1%  | 68.5%  | 68.2%  | **Run #2** | Stable              |
+| **Non-Polarized F1** | 66.2%  | 62.1%  | 62.7%  | **Run #1** | -4.1% then +0.6%    |
+| **Objective F1**     | 40.4%  | 34.9%  | 37.0%  | **Run #1** | -5.5% then +2.1%    |
+| **Partisan F1**      | 75.1%  | 88.2%  | 78.1%  | **Run #2** | +13.1% then -10.1%  |
+| Training Time        | 56m    | 92m    | 66m    | **Run #3** | Most efficient      |
+
+### 🎯 **Overall Verdict:**
+
+- **Best Overall:** Run #2 (60.97% Macro-F1, 88.2% Partisan F1)
+- **Most Balanced:** Run #3 (but still underperforming)
+- **Most Efficient:** Run #3 (66 minutes)
+
+**Run #2 remains the BEST model** despite being aggressive. Run #3's attempt to rebalance FAILED.
+
+---
+
+## 🔮 STRATEGIC PATH FORWARD
+
+### Current Situation:
+
+- **3 runs completed:** 58.46% → 60.97% → 60.55%
+- **Progress:** +2.09% overall (but last run was -0.42%)
+- **Gap to target:** Still need **+14.45%** to reach 75%
+
+### Realistic Assessment:
+
+**❌ Hyperparameter tuning ALONE will NOT reach 75%**
+
+The plateau at 60-61% across Runs #2-#3 suggests we've hit a **fundamental limitation** of the current approach. To break through:
+
+### 3-Phase Strategy to 75%:
+
+#### **Phase 1: Stabilization (Run #4)**
+
+- **Target:** 63-65% Macro-F1
+- **Strategy:** Selective rebalancing (keep R2 stability, adjust boosts)
+- **Timeline:** 1 run
+
+#### **Phase 2: Architecture Enhancement (Runs #5-#6)**
+
+- **Target:** 68-72% Macro-F1
+- **Strategy Options:**
+  1. **Task-Specific Architectures:** Separate heads for each task with different depths
+  2. **Attention Mechanisms:** Add task-specific attention layers
+  3. **Multi-Stage Training:** Pre-train on polarization, fine-tune on sentiment
+  4. **External Features:** Add metadata (source, author, date, length)
+- **Timeline:** 2 runs
+
+#### **Phase 3: Advanced Techniques (Runs #7-#8)**
+
+- **Target:** 75%+ Macro-F1 ✅
+- **Strategy Options:**
+  1. **Data Augmentation:** SMOTE, back-translation, paraphrasing for objective class
+  2. **Ensemble Methods:** Combine mBERT + XLM-RoBERTa predictions
+  3. **Semi-Supervised Learning:** Use unlabeled data for better representations
+  4. **Hierarchical Classification:** First classify objective/non-objective, then subdivide
+- **Timeline:** 2 runs
+
+### **Estimated Total:** 5 more runs to reach 75% target
+
+---
+
+## 💾 CONFIGURATION SNAPSHOT - RUN #3
+
+```python
+# CORE TRAINING - RUN #3 REBALANCED (Based on Run #2 Analysis)
+MAX_LENGTH = 224
+EPOCHS = 15                 # ⬇️ DOWN from 20
+BATCH_SIZE = 16
+LR = 3.0e-5                # ⬆️ UP from 2.5e-5
+WEIGHT_DECAY = 0.03
+WARMUP_RATIO = 0.20
+EARLY_STOP_PATIENCE = 6    # ⬇️ DOWN from 8
+GRAD_ACCUM_STEPS = 3       # Effective batch: 48
+MAX_GRAD_NORM = 0.5
+
+# Per-task loss - RUN #3 MODERATE
+FOCAL_GAMMA_SENTIMENT = 2.5   # ⬇️ DOWN from 3.0
+FOCAL_GAMMA_POLARITY = 3.0    # ⬇️ DOWN from 3.5
+LABEL_SMOOTH_SENTIMENT = 0.10
+LABEL_SMOOTH_POLARITY = 0.08
+TASK_LOSS_WEIGHTS = {"sentiment": 1.0, "polarization": 1.3}
+
+# AGGRESSIVE CLASS WEIGHTS (unchanged)
+CLASS_WEIGHT_MULT = {
+    "sentiment": {"negative": 1.10, "neutral": 1.80, "positive": 1.30},
+    "polarization": {"non_polarized": 1.20, "objective": 2.50, "partisan": 0.95}
+}
+MAX_CLASS_WEIGHT = 10.0
+
+# REBALANCED OVERSAMPLING
+JOINT_ALPHA = 0.70
+JOINT_OVERSAMPLING_MAX_MULT = 8.0
+OBJECTIVE_BOOST_MULT = 7.0      # ⬇️ DOWN from 10.0
+NEUTRAL_BOOST_MULT = 3.0        # ⬇️ DOWN from 4.0
+
+# ARCHITECTURE (unchanged)
+HEAD_HIDDEN = 768
+HEAD_DROPOUT = 0.25
+HEAD_LAYERS = 3
+REP_POOLING = "CLS"
+
+# REGULARIZATION (unchanged)
+RDROP_ALPHA = 0.6
+RDROP_WARMUP_EPOCHS = 2
+LLRD_DECAY = 0.90
+HEAD_LR_MULT = 3.0
+
+OUT_DIR = "./runs_mbert_optimized"
+```
+
+---
+
+## ✅ NEXT STEPS
+
+1. **Immediate:** Apply Run #4 configuration to `MBERT_TRAINING.ipynb`
+2. **Execute:** Run training on Google Colab (~75 minutes estimated)
+3. **Monitor:** Watch for Partisan F1 recovery and Objective F1 improvement
+4. **Analyze:** If Run #4 < 63%, pivot to data augmentation strategy
+5. **Iterate:** Continue until 75% target achieved
+
+---
+
+**Generated:** October 23, 2025  
+**Model:** mBERT (bert-base-multilingual-cased)  
+**Training Duration:** 66 minutes (1h 6m)  
+**Status:** Run #3 analysis complete, ready for Run #4 configuration
+
+**Next Run Target:** **63-65% Macro-F1** with recovered Partisan performance
+
+---
+
+📌 **WORKFLOW REMINDER:**
+
+1. ✅ All run analyses appended to `RUN_ANALYSIS.md` ✅
+2. ✅ Each analysis labeled with date + run number ✅
+3. ✅ After analysis → apply fixes to `MBERT_TRAINING.ipynb` (NEXT STEP!)
+4. ✅ Repeat this instruction every chat for memory ✅
