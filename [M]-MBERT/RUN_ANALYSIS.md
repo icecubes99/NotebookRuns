@@ -1882,3 +1882,170 @@ OUT_DIR = "./runs_mbert_optimized"
 2. ✅ Each analysis labeled with date + run number ✅
 3. ✅ After analysis → apply fixes to `MBERT_TRAINING.ipynb` (NEXT STEP!)
 4. ✅ Repeat this instruction every chat for memory ✅
+
+---
+
+---
+
+---
+
+# 📊 mBERT RUN #4 - COMPREHENSIVE ANALYSIS
+
+**Date:** October 23, 2025  
+**Run:** #4 (Selective Rebalancing)  
+**Status:** ✅ **SUCCESS** - Best performance achieved so far!
+
+---
+
+## 🎯 EXECUTIVE SUMMARY
+
+**Training Duration:** 1 hour 3 minutes (⬇️ 3 minutes faster than expected ~80m)  
+**Overall Result:** **62.06% Macro-F1** (⬆️ +1.51% vs Run #3: 60.55%)  
+**Status:** ✅ **BEST RUN YET** - First time above Run #2's 60.97%!
+
+### 🎉 **KEY ACHIEVEMENT:**
+
+**RUN #4 IS A SUCCESS!** The "Selective Rebalancing" strategy WORKED:
+
+- **Macro-F1: 62.06%** (up from 60.55% in Run #3, and ABOVE Run #2's 60.97%!)
+- **Objective F1: 42.4%** (up from 37.0%, +5.4% ✅ - MASSIVE improvement!)
+- **Neutral F1: 53.4%** (essentially flat from 53.5%, -0.1%)
+- **Partisan F1: 81.2%** (up from 78.1%, +3.1% ✅ - Recovered 31% of R3 loss!)
+
+### ✅ **KEY INSIGHT:**
+
+The "split-the-difference" strategy (8.5x objective, 3.5x neutral) successfully balanced improvements across ALL classes. By restoring Run #2's training stability (20 epochs, 2.5e-5 LR, patience 8, focal 3.5 for polarity) while using moderate oversampling, we achieved:
+
+1. **Best overall Macro-F1** across all 4 runs (62.06%)
+2. **Objective class breakthrough** (+5.4%, largest single-run gain yet)
+3. **Partisan recovery** (+3.1%, addressing Run #3's catastrophic drop)
+4. **Training efficiency** (63 minutes, faster than expected)
+
+---
+
+## 📈 DETAILED PERFORMANCE METRICS
+
+### **Overall Performance**
+
+| Metric               | Run #4     | Run #3     | Run #2     | Run #1     | Target | Gap vs Target | Change vs R3  | Status            |
+| -------------------- | ---------- | ---------- | ---------- | ---------- | ------ | ------------- | ------------- | ----------------- |
+| **Overall Macro-F1** | **62.06%** | **60.55%** | **60.97%** | **58.46%** | 75.00% | **-12.94%**   | **+1.51%** ⬆️ | ✅ **BEST RUN**   |
+| Sentiment F1         | 61.41%     | 61.83%     | 63.84%     | 59.19%     | 75.00% | -13.59%       | -0.42% ⬇️     | ⚠️ Slight decline |
+| Polarization F1      | 62.71%     | 59.28%     | 58.10%     | 57.73%     | 75.00% | -12.29%       | +3.43% ⬆️     | ✅ **Improved**   |
+
+**Accuracy:**
+
+- **Sentiment:** 59.06% (down from 60.67% in Run #3, -1.61%)
+- **Polarization:** 73.58% (up from 70.64% in Run #3, +2.94% ✅)
+
+### 🔍 **Key Observations:**
+
+1. **Best Macro-F1 Ever:** 62.06% beats all previous runs (R2: 60.97%, R3: 60.55%, R1: 58.46%)
+2. **Polarization Task Breakthrough:** 62.71% F1 is the highest polarization score across all runs
+3. **Trade-off:** Sentiment F1 slightly declined (-0.42%) but polarization gained significantly (+3.43%)
+4. **Net Positive:** Overall gain of +1.51% proves selective rebalancing worked
+
+---
+
+## 🔍 SENTIMENT ANALYSIS (3 Classes)
+
+### Aggregate Metrics
+
+| Metric       | Run #4     | Run #3     | Run #2     | Run #1     | Change vs R3  | Comment                         |
+| ------------ | ---------- | ---------- | ---------- | ---------- | ------------- | ------------------------------- |
+| **F1 Score** | **61.41%** | **61.83%** | **63.84%** | **59.19%** | **-0.42%** ⬇️ | Slight decline but still strong |
+| Accuracy     | 59.06%     | 60.67%     | 67.72%     | 56.25%     | -1.61% ⬇️     | Minor drop                      |
+| Precision    | 65.86%     | 62.96%     | 68.04%     | 64.42%     | +2.90% ⬆️     | **Improved precision**          |
+| Recall       | 65.04%     | 67.63%     | 68.93%     | 61.31%     | -2.59% ⬇️     | Lower recall, higher precision  |
+
+### Per-Class Performance
+
+| Class        | Precision | Recall | F1        | Support | Run #3 F1 | Run #2 F1 | Change vs R3 | Status                   |
+| ------------ | --------- | ------ | --------- | ------- | --------- | --------- | ------------ | ------------------------ |
+| **Negative** | 84.7%     | 47.5%  | **60.9%** | 886     | 63.8%     | 69.5%     | **-2.9%** ⬇️ | ⚠️ Recall issue persists |
+| **Neutral**  | 40.0%     | 80.3%  | **53.4%** | 401     | 53.5%     | 53.6%     | **-0.1%** ➡️ | ➡️ Stable (still weak)   |
+| **Positive** | 72.9%     | 67.3%  | **70.0%** | 208     | 68.2%     | 68.5%     | **+1.8%** ⬆️ | ✅ **Improvement!**      |
+
+### 🔍 **Sentiment Analysis:**
+
+1. **Negative (60.9% F1):** ⬇️ **Lost 2.9% F1** from Run #3
+
+   - High precision (84.7%) but **critically low recall (47.5%)**
+   - Model is very conservative: when it predicts negative, it's usually right, but it misses >50% of negatives
+   - This is now the **#1 problem** in sentiment task (was 69.5% in R2, dropped to 60.9%)
+   - **Root cause:** Oversampling focused on neutral/objective may have de-prioritized negative
+
+2. **Neutral (53.4% F1):** ➡️ **Essentially unchanged** across R2-R4
+
+   - Stuck at ~53-54% F1 across last 3 runs (53.6% → 53.5% → 53.4%)
+   - Persistent issue: Very low precision (40.0%) but high recall (80.3%)
+   - **Pattern:** Model over-predicts neutral class → many false positives
+   - **Insight:** Oversampling alone won't fix this - need different approach
+
+3. **Positive (70.0% F1):** ✅ **Best performance yet!** (+1.8% from R3)
+   - Balanced precision (72.9%) and recall (67.3%)
+   - Most stable class across all runs
+   - Consistently 68-70% F1
+
+---
+
+## 🔍 POLARIZATION ANALYSIS (3 Classes)
+
+### Aggregate Metrics
+
+| Metric       | Run #4     | Run #3     | Run #2     | Run #1     | Change vs R3  | Comment                          |
+| ------------ | ---------- | ---------- | ---------- | ---------- | ------------- | -------------------------------- |
+| **F1 Score** | **62.71%** | **59.28%** | **58.10%** | **57.73%** | **+3.43%** ⬆️ | **Best polarization F1 ever!**   |
+| Accuracy     | 73.58%     | 70.64%     | 74.11%     | 66.98%     | +2.94% ⬆️     | **Significant improvement**      |
+| Precision    | 62.97%     | 60.18%     | 62.37%     | 60.80%     | +2.79% ⬆️     | Better precision                 |
+| Recall       | 63.21%     | 59.85%     | 63.82%     | 58.33%     | +3.36% ⬆️     | **Excellent recall improvement** |
+
+### Per-Class Performance
+
+| Class             | Precision | Recall | F1        | Support | Run #3 F1 | Run #2 F1 | Change vs R3 | Status                         |
+| ----------------- | --------- | ------ | --------- | ------- | --------- | --------- | ------------ | ------------------------------ |
+| **Non-Polarized** | 58.2%     | 72.4%  | **64.5%** | 435     | 62.7%     | 62.1%     | **+1.8%** ⬆️ | ✅ Improved                    |
+| **Objective**     | 45.0%     | 40.0%  | **42.4%** | 90      | 37.0%     | 34.9%     | **+5.4%** ⬆️ | ✅ **BREAKTHROUGH! (+5.4%)**   |
+| **Partisan**      | 85.7%     | 77.2%  | **81.2%** | 970     | 78.1%     | 88.2%     | **+3.1%** ⬆️ | ✅ **Recovered!** (was -10.1%) |
+
+### 🔍 **Polarization Analysis:**
+
+1. **Non-Polarized (64.5% F1):** ✅ **Steady improvement** (+1.8%)
+
+   - Progressing nicely: 62.1% (R2) → 62.7% (R3) → 64.5% (R4)
+   - Good recall (72.4%), improving precision (58.2%)
+   - On track toward target
+
+2. **Objective (42.4% F1):** ✅ **BREAKTHROUGH IMPROVEMENT!** (+5.4%)
+
+   - **Largest single-run gain for objective class yet!**
+   - Trajectory: 40.4% (R1) → 34.9% (R2) → 37.0% (R3) → 42.4% (R4)
+   - **R4 finally reversed the R2 regression** and exceeded R1 baseline
+   - Precision 45.0%, Recall 40.0% → both improving but still low
+   - **8.5x boost (vs R3's 7x, R2's 10x) was the sweet spot!**
+   - Still 12.6% below target (55%) but moving in right direction
+
+3. **Partisan (81.2% F1):** ✅ **RECOVERY SUCCESS!** (+3.1%)
+   - **Recovered 31% of R3's catastrophic -10.1% loss**
+   - Precision 85.7%, Recall 77.2% → both excellent
+   - Still below R2's peak (88.2%) but much better than R3 (78.1%)
+   - **Restoring focal gamma 3.5 + training stability was key**
+
+---
+
+## 🎯 Run #4 Confirmed as BEST RUN! 🏆
+
+**Training time:** 63 minutes  
+**Overall Macro-F1:** 62.06% (+1.51% vs R3, +1.09% vs R2, +3.60% vs R1)  
+**Key wins:** Objective +5.4%, Partisan +3.1%, Polarization F1 best ever (62.71%)
+
+The comprehensive analysis document is ready! Would you like me to continue with recommendations for Run #5?
+
+---
+
+📌 **WORKFLOW REMINDER:**
+
+1. ✅ All run analyses appended to `RUN_ANALYSIS.md` ✅
+2. ✅ Each analysis labeled with date + run number ✅
+3. ✅ After analysis → apply fixes to `MBERT_TRAINING.ipynb` (NEXT STEP!)
+4. ✅ Repeat this instruction every chat for memory ✅
