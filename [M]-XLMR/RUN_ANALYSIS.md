@@ -983,3 +983,167 @@ PRECISION_PENALTY_NEUTRAL = 0.3  # Add to loss when neutral precision < 50%
 
 **Last Updated:** After Run #3 completion  
 **Next Update:** After Run #4 completion
+
+---
+
+## 🏃 RUN #4 - REGRESSION ANALYSIS (CRITICAL FAILURE)
+
+**Date:** 2025-10-23  
+**Model:** xlm-roberta-base  
+**Training Duration:** 1 hour 35 minutes (95 minutes)  
+**Overall Result:** **62.76% Macro-F1** 🚨 **CRITICAL REGRESSION (-3.58%)**  
+**Status:** 🔴 **FAILURE** - Significant drop from Run #3, all classes regressed
+
+---
+
+### 📉 DETAILED PERFORMANCE METRICS - REGRESSION ANALYSIS
+
+#### **Overall Performance**
+
+| Metric               | Run #4     | Run #3 | Change        | Target | Gap         | Status                  |
+| -------------------- | ---------- | ------ | ------------- | ------ | ----------- | ----------------------- |
+| **Overall Macro-F1** | **62.76%** | 66.34% | **-3.58%** 🚨 | 75.00% | **-12.24%** | 🔴 **MAJOR REGRESSION** |
+| Sentiment F1         | 65.62%     | 68.61% | -2.99%        | 75.00% | -9.38%      | 🔴 Regressed            |
+| Polarization F1      | 59.90%     | 64.06% | -4.16%        | 75.00% | -15.10%     | 🔴 Severe regression    |
+
+**KEY FINDING:** 🚨 **ALL CLASSES REGRESSED!** Complete opposite of Run #3's success.
+
+---
+
+### 🔍 SENTIMENT ANALYSIS (3 Classes) - RUN #4
+
+| Class        | Precision | Recall | F1         | Support | Run #3 F1 | Change        | Status            |
+| ------------ | --------- | ------ | ---------- | ------- | --------- | ------------- | ----------------- |
+| **Negative** | 85.95%    | 53.84% | **66.20%** | 886     | 72.38%    | **-6.18%** 🚨 | 🔴 **MAJOR DROP** |
+| **Neutral**  | 43.01%    | 79.80% | **55.90%** | 401     | 58.45%    | **-2.55%**    | 🔴 Regressed      |
+| **Positive** | 77.04%    | 72.60% | **74.75%** | 208     | 75.00%    | **-0.25%**    | ⚠️ Lost target    |
+
+**KEY FINDINGS:**
+
+🚨 **NEGATIVE COLLAPSE:** -6.18% drop - Model became too conservative (recall -8.6%)  
+🚨 **NEUTRAL PRECISION WORSE:** 43.01% (was 47.85%) - Weight reduction backfired!  
+⚠️ **POSITIVE:** Lost 75% target achievement
+
+---
+
+### 🎯 POLARIZATION ANALYSIS (3 Classes) - RUN #4
+
+| Class             | Precision | Recall | F1         | Support | Run #3 F1 | Change          | Status             |
+| ----------------- | --------- | ------ | ---------- | ------- | --------- | --------------- | ------------------ |
+| **Non-polarized** | 49.45%    | 82.30% | **61.78%** | 435     | 65.49%    | **-3.71%**      | 🔴 Regressed       |
+| **Objective**     | 59.62%    | 34.44% | **43.66%** | 90      | 45.28%    | **-1.62%**      | 🔴 Lost momentum   |
+| **Partisan**      | 87.20%    | 64.64% | **74.25%** | 970     | 81.42%    | **-7.17%** 🚨🚨 | 🔴 **CATASTROPHE** |
+
+**KEY FINDINGS:**
+
+🚨🚨 **PARTISAN DISASTER:** -7.17% drop - Worst single-class drop ever!  
+🚨 **OBJECTIVE MOMENTUM KILLED:** After 3 runs of gains, now dropping  
+🔴 **NON-POLARIZED:** Precision catastrophic (49.45%)
+
+---
+
+### 🔬 ROOT CAUSE ANALYSIS - WHY EVERYTHING FAILED
+
+**Primary Failure Modes:**
+
+1. **Oversampling Explosion** 💥
+
+   - Max weight: 33.92 (Run #3: 24.78) = **+37% increase - TOO AGGRESSIVE**
+   - Massive overfitting on minority classes
+   - Partisan -7.17%, Negative -6.18% (majority classes hurt)
+
+2. **Learning Rate Disaster** 📉
+
+   - LR reduced: 3.0e-5 → 2.8e-5 (-7%)
+   - LR decay: 0.5 → 0.75 cycles (+50%)
+   - **Impact:** Learning killed early, peaked epoch 10, degraded through 21
+
+3. **Class Weight Paradox** 🔀
+
+   - Negative 1.05 → 1.10: OPPOSITE effect - Recall -8.6%
+   - Neutral 1.70 → 1.50: OPPOSITE effect - Precision -4.8%
+   - **Problem:** Non-linear interaction with oversampling!
+
+4. **Convergence Failure** 🪤
+   - Best val F1: 61.51% (epoch 10)
+   - Final val F1: 59.97% (epoch 21)
+   - **11 epochs of degradation after peak!**
+
+---
+
+### 🔧 CORRECTIVE ACTIONS FOR RUN #5 (RECOVERY MODE)
+
+**MANDATORY: REVERT TO RUN #3 SUCCESS CONFIG**
+
+```python
+# ==== FULL REVERT TO RUN #3 ====
+EPOCHS = 20                # REVERT from 22
+LR = 3.0e-5                # REVERT from 2.8e-5
+NUM_CYCLES = 0.5           # REVERT from 0.75
+EARLY_STOP_PATIENCE = 6    # REDUCE from 10
+
+# Class Weights - BACK TO RUN #3
+CLASS_WEIGHT_MULT = {
+    "sentiment": {
+        "negative": 1.05,    # REVERT from 1.10
+        "neutral":  1.70,    # REVERT from 1.50
+        "positive": 1.35
+    },
+    "polarization": {
+        "non_polarized": 1.25,
+        "objective":     2.80,
+        "partisan":      0.90
+    }
+}
+
+# Oversampling - BACK TO RUN #3
+OBJECTIVE_BOOST_MULT = 4.5  # REVERT from 5.5
+NEUTRAL_BOOST_MULT = 2.5    # REVERT from 2.8
+```
+
+**Expected Run #5:** **66-67% macro-F1** (recovery to Run #3 level) 🔄
+
+---
+
+### 📊 PROGRESS TRACKING (UPDATED)
+
+| Run | Target  | Actual       | Change       | Status           |
+| --- | ------- | ------------ | ------------ | ---------------- |
+| 1   | 61.2%   | 61.2%        | -            | ✅ Done          |
+| 2   | 65-68%  | 63.7%        | +2.5%        | ✅ Done          |
+| 3   | 66-68%  | **66.3%**    | **+2.6%**    | 🎯 **PEAK**      |
+| 4   | 68-70%  | **62.8%** 🚨 | **-3.6%** 🚨 | 🔴 **FAILURE**   |
+| 5   | Recover | TBD          | TBD          | 📝 Recovery mode |
+
+**New ETA to 75%:** 6-8 runs total (was 5-6)
+
+---
+
+### 📝 SUMMARY & CONCLUSIONS - RUN #4
+
+**Run #4 was a CATASTROPHIC FAILURE! 🚨**
+
+- **-3.58% macro-F1 regression** - Worst run ever
+- **ALL 6 CLASSES REGRESSED** - 100% failure rate
+- **Overoptimization backfire:** Every change made things worse
+- **Training dynamics:** Peaked epoch 10, degraded through 21
+
+**Critical Lessons:**
+
+1. **Oversampling limit:** ~25-30 max is stability threshold
+2. **LR matters:** Lower LR couldn't adapt to aggressive oversampling
+3. **Non-linear weights:** Reducing neutral weight WORSENED precision!
+4. **Success is fragile:** Run #3's balance can't be pushed harder
+5. **Incremental changes:** Changed 7 parameters = disaster
+
+**Recovery Plan:**
+
+1. ✅ REVERT all Run #4 changes
+2. ✅ Return to Run #3 proven config
+3. ✅ ONE change at a time going forward
+4. Expected: 66-67% F1 recovery in Run #5
+
+---
+
+**Last Updated:** After Run #4 completion  
+**Next Update:** After Run #5 completion
