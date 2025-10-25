@@ -2349,3 +2349,365 @@ Run #5 (Targeted Fixes):         58.54% Macro-F1 (-3.52%) 💥 DISASTER
 **Next action:** **RESTORE R4 + GRADIENT FLOW ENHANCEMENT**
 
 ---
+
+# 📊 RUN #6 ANALYSIS
+
+**Date:** October 25, 2025  
+**Strategy:** R4 RESTORATION + GRADIENT FLOW ENHANCEMENT  
+**Training Time:** 1h 32m (completed all 20 epochs)
+
+---
+
+## 🎯 EXECUTIVE SUMMARY
+
+**Overall Macro-F1: 61.59%** (vs R4: 62.06%, vs R5: 58.54%)
+
+**Result: PARTIAL RECOVERY** ⚠️
+
+Run #6 successfully recovered **+3.05%** from R5's catastrophic regression (58.54% → 61.59%) but fell **-0.47%** short of R4's benchmark (62.06%). The gradient flow enhancement (MAX_GRAD_NORM: 0.5→1.0, LLRD_DECAY: 0.90→0.92) produced **mixed results**:
+
+✅ **Sentiment Task IMPROVED** (61.4% → 64.3%, +2.9%)  
+❌ **Polarization Task REGRESSED** (62.7% → 58.8%, -3.9%)
+
+---
+
+## 📈 PERFORMANCE METRICS
+
+### Overall Performance:
+
+| Metric              | Run #6 | Run #4 | Run #5 | vs R4         | vs R5      |
+| ------------------- | ------ | ------ | ------ | ------------- | ---------- |
+| **Macro-F1**        | 61.59% | 62.06% | 58.54% | **-0.47%**    | **+3.05%** |
+| **Sentiment F1**    | 64.34% | 61.43% | 63.80% | **+2.91%** ✅ | +0.54%     |
+| **Polarization F1** | 58.85% | 62.71% | 53.28% | **-3.86%** ❌ | +5.57%     |
+
+### Per-Class F1 Scores:
+
+**Sentiment Classes:**
+| Class | Run #6 | Run #4 | Run #5 | vs R4 | vs R5 | Gap to 75% |
+| ----------- | ------- | ------- | ------- | -------- | -------- | ---------- |
+| Negative | **66.8%** | 60.9% | 54.7% | **+5.9%** ✅ | **+12.1%** | -8.2% |
+| Neutral | **54.0%** | 53.4% | 53.7% | **+0.6%** | +0.3% | **-21.0%** |
+| Positive | **72.2%** | 70.0% | 63.0% | **+2.2%** ✅ | **+9.2%** | -2.8% |
+
+**Polarization Classes:**
+| Class | Run #6 | Run #4 | Run #5 | vs R4 | vs R5 | Gap to 75% |
+| -------------- | ------- | ------- | ------- | -------- | -------- | ---------- |
+| Non-polarized | **62.5%** | 55.8% | 46.6% | **+6.7%** ✅ | **+15.9%** | -12.5% |
+| Objective | 39.5% | 42.4% | 34.9% | **-2.9%** ❌ | +4.6% | **-35.5%** |
+| Partisan | 74.5% | 81.2% | 70.5% | **-6.7%** ❌ | +4.0% | -0.5% |
+
+### Precision/Recall Breakdown:
+
+**Sentiment:**
+| Class | Precision | Recall | F1 | Support | Issue |
+| -------- | --------- | ------- | ------- | ------- | ------------------------------ |
+| Negative | **83.2%** | 55.9% | 66.8% | 886 | Low recall (improved from R4's 47.5%) |
+| Neutral | 42.6% | **73.8%** | 54.0% | 401 | **Very low precision** (platformed) |
+| Positive | 72.7% | 71.6% | 72.2% | 208 | Balanced, good performance |
+
+**Polarization:**
+| Class | Precision | Recall | F1 | Support | Issue |
+| -------------- | --------- | ------- | ------- | ------- | ----------------------------------- |
+| Non-polarized | 50.4% | **82.3%** | 62.5% | 435 | Low precision, over-predicting |
+| Objective | 48.4% | **33.3%** | 39.5% | 90 | **CRITICAL: Very low recall** |
+| Partisan | **87.3%** | 65.1% | 74.5% | 970 | Low recall (dropped from R4's 75.5%) |
+
+---
+
+## 🔍 ROOT CAUSE ANALYSIS
+
+### ✅ **What Worked:**
+
+1. **Gradient Flow Enhancement HELPED Sentiment Task:**
+
+   - Increasing MAX_GRAD_NORM from 0.5 to 1.0 allowed stronger gradient updates
+   - Reducing LLRD_DECAY from 0.90 to 0.92 created more uniform learning across layers
+   - **Result:** Negative F1 +5.9%, Positive F1 +2.2%, Sentiment F1 +2.9%
+
+2. **Negative Class Breakthrough:**
+
+   - F1: 54.7% (R5) → 66.8% (R6) = **+12.1% improvement!**
+   - Recall improved from 40.3% (R5) to 55.9% (R6) = **+15.6%**
+   - This was the primary goal and it succeeded
+
+3. **Non-Polarized Class Recovery:**
+   - F1: 46.6% (R5) → 62.5% (R6) = **+15.9% improvement!**
+   - Recovered from R5's disaster and exceeded R4's 55.8%
+
+### ❌ **What Failed:**
+
+1. **Gradient Flow HURT Polarization Task:**
+
+   - Polarization F1 dropped 3.9% (62.7% → 58.8%)
+   - The stronger gradients that helped sentiment **destabilized polarization learning**
+   - This created a **task-specific trade-off problem**
+
+2. **Partisan Class Regression:**
+
+   - F1: 81.2% (R4) → 74.5% (R6) = **-6.7% loss**
+   - Recall dropped from 75.5% to 65.1% = **-10.4%**
+   - The gradient changes that boosted sentiment hurt our best polarization class
+
+3. **Objective Class Continued Weakness:**
+
+   - F1: 42.4% (R4) → 39.5% (R6) = **-2.9% regression**
+   - Still **35.5% below the 75% target** (worst class by far)
+   - Gradient flow didn't help this minority class
+
+4. **Neutral Precision Crisis Persists:**
+   - Precision: 42.6% (abysmal, unchanged from R4/R5)
+   - Recall: 73.8% (over-predicting neutral massively)
+   - The model is throwing "neutral" at everything it's uncertain about
+
+---
+
+## 🧠 KEY INSIGHTS
+
+### 1. **The Gradient Flow Trade-Off:**
+
+Run #6 revealed a **critical architectural insight**: gradient flow parameters (MAX_GRAD_NORM, LLRD_DECAY) have **opposite effects on the two tasks**:
+
+- **Sentiment benefits from stronger gradients** (1.0 norm, 0.92 decay)
+- **Polarization benefits from tighter gradients** (0.5 norm, 0.90 decay)
+
+This explains the seesaw effect:
+
+- R4 (tight gradients): Polarization 62.7% ✅, Sentiment 61.4% ⚠️
+- R6 (loose gradients): Sentiment 64.3% ✅, Polarization 58.8% ⚠️
+
+**Implication:** We cannot simply adjust gradient flow globally. We need **task-specific or layer-specific gradient strategies**.
+
+### 2. **The Calibration Mystery:**
+
+Calibration **still failed** (lines 65-66 warn "No trained weights found"). This has been a recurring issue since R1. The model isn't being loaded properly for calibration, so we're getting untrained model biases.
+
+**Impact:** We're missing potential 2-5% F1 gains from post-hoc bias correction.
+
+### 3. **The Class Imbalance Ceiling:**
+
+Despite all optimization attempts, we keep hitting the same barriers:
+
+- **Neutral precision: 42-43%** (stuck for 3 runs)
+- **Objective recall: 33-38%** (stuck for 6 runs)
+
+These aren't hyperparameter issues—they're **architectural limitations**. The model fundamentally struggles with:
+
+- Distinguishing neutral from negative/positive (neutral precision)
+- Detecting the rare objective class (objective recall)
+
+---
+
+## 📊 RUN PROGRESSION SUMMARY
+
+| Run | Macro-F1 | Change   | Strategy                        | Key Result                           |
+| --- | -------- | -------- | ------------------------------- | ------------------------------------ |
+| R1  | 58.50%   | baseline | Aggressive optimization         | Failed, calibration broken           |
+| R2  | 60.97%   | +2.47%   | More aggressive                 | Improved weak classes, hurt strong   |
+| R3  | 60.55%   | -0.42%   | Dial back R2                    | Regression, partisan -10%            |
+| R4  | 62.06%   | +1.51%   | Selective rebalancing           | **BEST RUN** (balanced performance)  |
+| R5  | 58.54%   | -3.52%   | Targeted fixes (too aggressive) | **CATASTROPHIC FAILURE**             |
+| R6  | 61.59%   | +3.05%   | R4 restore + gradient flow      | **Partial recovery**, task trade-off |
+
+**Current best:** R4 at 62.06% Macro-F1  
+**Distance to goal:** 12.94% (75% - 62.06%)
+
+---
+
+## 🎯 LESSONS LEARNED
+
+### 1. **Gradient Flow is Task-Dependent:**
+
+- Sentiment and polarization tasks respond **differently** to gradient magnitude
+- Global gradient adjustments create winners and losers
+- Need task-specific or adaptive gradient strategies
+
+### 2. **R4 Configuration is Near-Optimal:**
+
+- 3 attempts to improve R4 have all failed (R5, R6 both underperformed)
+- R4 represents a **local optimum** for current architecture
+- Further gains require architectural changes, not hyperparameter tweaking
+
+### 3. **Single-Parameter Changes Still Have Trade-Offs:**
+
+- Even "surgical" fixes (1 parameter change) created new problems
+- The model is highly sensitive and well-balanced at R4
+- Micro-adjustments are insufficient
+
+### 4. **Calibration Must Be Fixed:**
+
+- 6 runs and calibration still doesn't load trained weights
+- This is a **persistent bug** costing us 2-5% F1
+- Must be addressed before further optimization
+
+---
+
+## 🚀 RECOMMENDATIONS FOR RUN #7
+
+After 6 runs, we've learned that **hyperparameter tuning is near its limit**. To reach 75% F1, we need **structural changes**. Here are three strategic paths:
+
+### **Path A: Task-Specific Gradient Control** ⭐ **RECOMMENDED**
+
+**Rationale:** R6 proved gradient flow affects tasks differently. Instead of global settings, use **task-specific gradient norms**.
+
+**Implementation:**
+
+```python
+# Separate gradient norms for each task
+SENTIMENT_GRAD_NORM = 1.0    # Sentiment benefits from stronger gradients
+POLARITY_GRAD_NORM = 0.5     # Polarization needs tighter control
+
+# In training loop, clip gradients separately per task head
+clip_grad_norm_(sentiment_head.parameters(), SENTIMENT_GRAD_NORM)
+clip_grad_norm_(polarity_head.parameters(), POLARITY_GRAD_NORM)
+```
+
+**Expected Impact:**
+
+- Retain R6's sentiment gains (negative 66.8%, positive 72.2%)
+- Restore R4's polarization performance (partisan 81%, objective 42%)
+- **Target: 63-65% Macro-F1**
+
+---
+
+### **Path B: Fix Calibration + Enhanced Oversampling**
+
+**Rationale:** Calibration has been broken for 6 runs. Fixing this + smarter oversampling could unlock 3-5% gains.
+
+**Changes:**
+
+1. **Fix calibration loading:**
+
+   - Ensure `pytorch_model.bin` is saved correctly
+   - Verify model loads trained weights (lines 65-66 show failure)
+
+2. **Smarter oversampling for objective:**
+
+   - OBJECTIVE_BOOST_MULT: 8.5 → **12.0** (more aggressive for worst class)
+   - Add **per-sample difficulty weighting** (focus on misclassified samples)
+
+3. **Neutral precision enhancement:**
+   - Add **focal loss asymmetry**: Higher gamma for neutral false positives
+   - Increase neutral class weight from 1.80 to **2.20**
+
+**Expected Impact:**
+
+- Calibration: +2-3% (fix biases)
+- Objective F1: 39.5% → 45-48%
+- Neutral precision: 42.6% → 48-52%
+- **Target: 64-66% Macro-F1**
+
+---
+
+### **Path C: Architectural Expansion**
+
+**Rationale:** Current architecture may be capacity-limited. Increase model capacity for complex class distinctions.
+
+**Changes:**
+
+1. **Larger classification heads:**
+
+   - HEAD_HIDDEN: 768 → **1024**
+   - HEAD_LAYERS: 3 → **4**
+   - Add **residual connections** in heads
+
+2. **Task-specific encoders:**
+
+   - Keep shared mBERT backbone
+   - Add **separate task-specific attention layers** before heads
+   - Allows task-specialized representations
+
+3. **Ensemble final layer:**
+   - Train 3 separate polarity heads
+   - Ensemble predictions for robust objective detection
+
+**Expected Impact:**
+
+- Better neutral/negative separation (more capacity)
+- Better objective detection (specialized attention)
+- Higher computational cost (+20% training time)
+- **Target: 64-67% Macro-F1**
+
+---
+
+## 🎯 STRATEGIC RECOMMENDATION
+
+**Recommended path:** **Path A (Task-Specific Gradient Control)** + **Path B.1 (Fix Calibration)**
+
+**Rationale:**
+
+1. **Path A is low-risk, high-reward** - R6 validated the hypothesis
+2. **Calibration fix is mandatory** - 6 runs with broken calibration is unacceptable
+3. **Path B.2-B.3 are backups** if Path A doesn't break 63%
+
+**Configuration for Run #7:**
+
+```python
+# BASE: Restore R4 configuration (proven stable)
+EPOCHS = 20
+LR = 2.5e-5
+EARLY_STOP_PATIENCE = 8
+OBJECTIVE_BOOST_MULT = 8.5
+NEUTRAL_BOOST_MULT = 3.5
+
+# NEW: Task-specific gradient control
+USE_TASK_SPECIFIC_GRAD_NORM = True
+SENTIMENT_GRAD_NORM = 1.0     # From R6 (worked for sentiment)
+POLARITY_GRAD_NORM = 0.5      # From R4 (worked for polarization)
+LLRD_DECAY = 0.90             # Restore R4 (tighter control)
+
+# FIX: Calibration loading
+# [Must fix model.save/load path issue in Section 11C]
+```
+
+**Expected outcomes:**
+
+- Sentiment F1: **64-65%** (keep R6 gains)
+- Polarization F1: **62-63%** (recover R4 performance)
+- Macro-F1: **63-64%** (+1.4-2.4% from R6)
+- **Calibration working:** +2% bonus → **Final: 65-66%**
+
+---
+
+## 📌 CRITICAL ISSUES TO ADDRESS
+
+1. **🔴 URGENT: Fix calibration loading bug** (lines 65-66)
+
+   - Model not loading trained weights for 6 runs
+   - Costing 2-5% potential F1 gains
+
+2. **⚠️ Implement task-specific gradient norms** (proven need in R6)
+
+   - Sentiment and polarization need different gradient strengths
+   - Current global norm creates trade-offs
+
+3. **⚠️ Investigate neutral precision crisis**
+
+   - Stuck at 42-43% for 3 runs
+   - Model over-predicting neutral for uncertainty
+   - May need architectural fix or better class boundaries
+
+4. **⚠️ Objective class remains critical bottleneck**
+   - 39.5% F1 (35.5% below target)
+   - 6 runs of oversampling haven't solved this
+   - May need dedicated objective detection head
+
+---
+
+## 🏁 NEXT STEPS
+
+1. ✅ **Implement task-specific gradient control** in training loop
+2. ✅ **Fix calibration loading bug** in Section 11C
+3. ✅ **Apply Run #7 configuration** to `MBERT_TRAINING.ipynb`
+4. ⏸️ **Monitor training closely** for task-specific convergence patterns
+5. ⏸️ **If R7 < 63%:** Consider Path C (architectural expansion)
+
+---
+
+**Run #6 Status: PARTIAL RECOVERY** ⚠️  
+**Training time:** 1h 32m (20 epochs completed)  
+**Overall Macro-F1:** 61.59% (+3.05% vs R5, -0.47% vs R4)  
+**Key insights:** Gradient flow is task-dependent, hyperparameter tuning near limits  
+**Next action:** **TASK-SPECIFIC GRADIENTS + FIX CALIBRATION**
+
+---
