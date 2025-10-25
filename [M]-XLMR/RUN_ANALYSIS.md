@@ -1115,12 +1115,474 @@ NEUTRAL_BOOST_MULT = 2.5    # REVERT from 2.8
 | 4   | 68-70%  | **62.8%** 🚨 | **-3.6%** 🚨 | 🔴 **FAILURE**       |
 | 5   | Recover | **67.2%** 🎉 | **+4.4%** 🎉 | 🟢 **NEW PEAK!**     |
 | 6   | 69-71%  | **66.9%** ⚠️ | **-0.3%** ⚠️ | 🟡 **MIXED RESULTS** |
+| 7   | 68-70%  | **65.6%** 🔴 | **-1.3%** 🔴 | 🔴 **REGRESSION**    |
+| 8   | 68-70%  | _Running..._ | -            | 🔄 **IN PROGRESS**   |
 
-**New ETA to 75%:** 6-8 runs total (need recalibration!)
+**New ETA to 75%:** 8-10 runs total (recovery + optimization phase)
 
 ---
 
-## 🏃 RUN #6 - MIXED RESULTS (CURRENT) ⚠️
+## 🏃 RUN #7 - REGRESSION (CURRENT) 🔴
+
+**Date:** 2025-10-25  
+**Model:** xlm-roberta-base  
+**Training Duration:** 2 hours 14 minutes (134 minutes)  
+**Overall Result:** **65.60% Macro-F1** 🔴 **SIGNIFICANT REGRESSION FROM RUN #6**  
+**Status:** 🔴 **FAILURE** - Both sentiment and polarization regressed
+
+---
+
+### 📈 DETAILED PERFORMANCE METRICS
+
+#### **Overall Performance**
+
+| Metric               | Run #7     | Run #6 | Run #5 | Change (vs R6) | Change (vs R5) | Target | Gap        | Status                        |
+| -------------------- | ---------- | ------ | ------ | -------------- | -------------- | ------ | ---------- | ----------------------------- |
+| **Overall Macro-F1** | **65.60%** | 66.93% | 67.20% | **-1.33%** 🔴  | **-1.60%** 🔴  | 75.00% | **-9.40%** | 🔴 **SIGNIFICANT REGRESSION** |
+| Sentiment F1         | 69.14%     | 70.82% | 70.20% | **-1.68%** 🔴  | **-1.06%** 🔴  | 75.00% | -5.86%     | 🔴 Regressed                  |
+| Polarization F1      | 62.07%     | 63.03% | 64.20% | **-0.96%** 🔴  | **-2.13%** 🔴  | 75.00% | -12.93%    | 🔴 Worse than both            |
+
+**KEY FINDING:** 🔴 **COMPLETE REGRESSION - ALL METRICS WORSE!**
+
+- Overall: -1.33% from Run #6, -1.60% from Run #5 peak
+- Sentiment: -1.68% regression
+- Polarization: -0.96% regression
+- **Worse than Run #5 peak!** Strategy failed completely
+
+---
+
+### 🔍 SENTIMENT ANALYSIS (3 Classes) - RUN #7
+
+| Class        | Precision | Recall | F1         | Support | Run #6 F1 | Run #5 F1 | Change (vs R6) | Change (vs R5) | Status                  |
+| ------------ | --------- | ------ | ---------- | ------- | --------- | --------- | -------------- | -------------- | ----------------------- |
+| **Negative** | 85.59%    | 67.04% | **75.19%** | 886     | 75.86%    | 76.13%    | **-0.67%** ➡️  | **-0.94%** ➡️  | 🟢 Stable (still >75%)  |
+| **Neutral**  | 48.47%    | 71.07% | **57.63%** | 401     | 60.33%    | 58.97%    | **-2.70%** 🔴  | **-1.34%** 🔴  | 🔴 **REGRESSED!**       |
+| **Positive** | 73.71%    | 75.48% | **74.58%** | 208     | 76.28%    | 75.51%    | **-1.70%** 🔴  | **-0.93%** 🔴  | ⚠️ Dropped below target |
+
+**KEY FINDINGS:**
+
+🔴 **ALL SENTIMENT CLASSES REGRESSED!**
+
+- Negative: -0.67% (still above 75% but declining)
+- Neutral: -2.70% (WORST - lost all Run #6 gains!)
+- Positive: -1.70% (dropped below 75% target!)
+
+🚨 **NEUTRAL FIX BACKFIRED!**
+
+- Despite 1874 samples (vs 227 in Run #6), performance got WORSE
+- F1: 60.33% → 57.63% (-2.70%)
+- Precision: 51.13% → 48.47% (-2.66%)
+- Recall: 73.57% → 71.07% (-2.50%)
+- **Conclusion:** 2.3x oversampling was still too aggressive!
+
+⚠️ **POSITIVE LOST TARGET:**
+
+- F1: 76.28% → 74.58% (-1.70%)
+- Precision: 77.61% → 73.71% (-3.90%)
+- Now below 75% target for first time since Run #5!
+
+🔍 **Performance Breakdown:**
+
+1. **Negative (75.19% F1):**
+
+   - Precision: 85.59% (excellent, stable)
+   - Recall: 67.04% (down from 68.62%, concerning)
+   - **Status:** Still above 75% target but declining trend
+   - **Gap:** -0.67% from Run #6
+
+2. **Neutral (57.63% F1):**
+
+   - Precision: 48.47% (WORSE, down from 51.13%)
+   - Recall: 71.07% (down from 73.57%)
+   - **Status:** BOTH metrics regressed despite more samples!
+   - **Gap:** -2.70% from Run #6, -1.34% from Run #5
+
+3. **Positive (74.58% F1):**
+   - Precision: 73.71% (down from 77.61%, -3.90%!)
+   - Recall: 75.48% (stable)
+   - **Status:** Lost 75% target!
+   - **Gap:** -1.70% from Run #6
+
+---
+
+### 🎯 POLARIZATION ANALYSIS (3 Classes) - RUN #7
+
+| Class             | Precision | Recall | F1         | Support | Run #6 F1 | Run #5 F1 | Change (vs R6) | Change (vs R5) | Status                   |
+| ----------------- | --------- | ------ | ---------- | ------- | --------- | --------- | -------------- | -------------- | ------------------------ |
+| **Non-polarized** | 56.38%    | 78.16% | **65.51%** | 435     | 63.44%    | 66.21%    | **+2.07%** ✅  | **-0.70%** ➡️  | 🟡 Mixed (up from R6)    |
+| **Objective**     | 50.85%    | 33.33% | **40.27%** | 90      | 41.56%    | 44.74%    | **-1.29%** 🔴  | **-4.47%** 🔴  | 🔴 **WORSE THAN BOTH!**  |
+| **Partisan**      | 87.03%    | 74.74% | **80.42%** | 970     | 84.10%    | 81.65%    | **-3.68%** 🔴  | **-1.23%** 🔴  | 🔴 **MAJOR REGRESSION!** |
+
+**KEY FINDINGS:**
+
+🚨 **OBJECTIVE WORSE THAN EVER!**
+
+- F1: 41.56% → 40.27% (-1.29%)
+- Recall: 35.56% → 33.33% (-2.23%)
+- Precision: 50.00% → 50.85% (+0.85%, only bright spot)
+- **5.0x boost didn't help - still overfitting!**
+- **Worse than Run #6 AND Run #5!**
+
+🔴 **PARTISAN MAJOR REGRESSION!**
+
+- F1: 84.10% → 80.42% (-3.68%)
+- Recall: 85.36% → 74.74% (-10.62%! MASSIVE DROP)
+- Precision: 82.88% → 87.03% (+4.15%, precision/recall trade-off)
+- **Lost all Run #6 gains!**
+- **Still above 75% target but declining fast**
+
+🟡 **NON-POLARIZED SLIGHT IMPROVEMENT:**
+
+- F1: 63.44% → 65.51% (+2.07%)
+- Recall: 63.22% → 78.16% (+14.94%! HUGE RECOVERY)
+- Precision: 63.66% → 56.38% (-7.28%, paid for recall gain)
+- **Only positive change in Run #7**
+
+🔍 **Performance Breakdown:**
+
+1. **Non-polarized (65.51% F1):**
+
+   - Precision: 56.38% (down -7.28%)
+   - Recall: 78.16% (up +14.94%! Recovered from R6 collapse)
+   - **Strength:** Recall recovery is significant
+   - **Weakness:** Precision dropped significantly
+   - **Net:** +2.07% F1 (trade-off worth it)
+
+2. **Objective (40.27% F1):**
+
+   - Precision: 50.85% (up +0.85%, minimal)
+   - Recall: 33.33% (down -2.23%)
+   - **Strength:** None - worse than both previous runs
+   - **Weakness:** 5.0x boost still caused overfitting
+   - **Gap:** -34.73% from 75% target (BIGGEST GAP)
+
+3. **Partisan (80.42% F1):**
+   - Precision: 87.03% (up +4.15%)
+   - Recall: 74.74% (down -10.62%! MAJOR DROP)
+   - **Strength:** Still above 75% target
+   - **Weakness:** Recall collapse - model too conservative
+   - **Gap:** Lost 3.68% from Run #6
+
+---
+
+### 🔬 ROOT CAUSE ANALYSIS - WHY RUN #7 FAILED
+
+#### **Critical Discovery** 🚨
+
+**Neutral oversampling actually worked (1874 samples), but performance WORSE!**
+
+| Metric          | Run #5 | Run #6 | Run #7 | Trend                    |
+| --------------- | ------ | ------ | ------ | ------------------------ |
+| Neutral samples | 1874   | 227    | 1874   | Fixed bug                |
+| Neutral F1      | 58.97% | 60.33% | 57.63% | ⬇️ WORSE with more data! |
+
+**This reveals a fundamental problem:** Neutral class benefits from UNDER-sampling, not over-sampling!
+
+#### **What Failed** 🔴
+
+1. **Neutral 2.3x Oversampling BACKFIRED** 🚨
+
+   - Got 1874 samples as intended (bug fixed!)
+   - But F1 regressed -2.70% (60.33% → 57.63%)
+   - **Root Cause:** More neutral samples = more overfitting!
+   - **Learning:** Neutral performs BETTER with less oversampling (Run #6's 227 was accidentally optimal!)
+
+2. **Objective 5.0x Still Overfits** 🔴
+
+   - F1: 41.56% → 40.27% (-1.29%)
+   - Even 5.0x (down from 6.0x) still causes overfitting
+   - **Root Cause:** 90 samples is too small for ANY aggressive oversampling
+   - **Learning:** Objective needs 3.0-4.0x maximum
+
+3. **Focal Gamma 3.2 Hurt Partisan** 🔴
+
+   - Partisan recall: 85.36% → 74.74% (-10.62%!)
+   - Partisan F1: 84.10% → 80.42% (-3.68%)
+   - **Root Cause:** Reverting to 3.2 wasn't the right move
+   - **Learning:** 3.5 might have been OK, or need 3.3-3.4
+
+4. **Training Duration Too Long** ⏱️
+   - Ran for 21/22 epochs (vs 19/22 in previous runs)
+   - Training time: 134 min (vs 87 min in Run #5/6)
+   - **Root Cause:** More oversampling = longer training = more overfitting
+   - **Learning:** Early stop should trigger sooner
+
+#### **What "Worked" (Sort Of)** ⚖️
+
+1. **Non-Polarized Recall Recovery** (+14.94%)
+   - Recall: 63.22% → 78.16%
+   - But precision dropped -7.28%
+   - **Net:** +2.07% F1 (acceptable trade-off)
+   - **Conclusion:** Focal gamma 3.2 helped this class
+
+---
+
+### 📊 TRAINING DYNAMICS ANALYSIS
+
+#### **Oversampling Stats (Run #7)**
+
+```
+Enhanced Oversampling: min=1.00, max=25.33
+├─ Objective boosted samples: 405 (5.0x boost on 90 samples)
+└─ Neutral boosted samples: 1874 (2.3x boost on ~750 samples)
+```
+
+**Analysis vs Run #6 vs Run #5:**
+
+| Metric            | Run #5 | Run #6 | Run #7 | Analysis                             |
+| ----------------- | ------ | ------ | ------ | ------------------------------------ |
+| Max weight        | 24.78  | 26.43  | 25.33  | ✅ Back to safe zone                 |
+| Objective samples | 405    | 405    | 405    | ➡️ Same (still problematic)          |
+| Neutral samples   | 1874   | 227    | 1874   | 🔴 "Fixed" but worse!                |
+| Neutral F1        | 58.97% | 60.33% | 57.63% | 🚨 More samples = worse performance! |
+
+**Critical Insight:** 🚨
+
+- Neutral F1 was BEST in Run #6 with only 227 samples!
+- Run #5: 1874 samples → 58.97% F1
+- Run #6: 227 samples → 60.33% F1 (BEST!)
+- Run #7: 1874 samples → 57.63% F1 (WORST!)
+
+**Conclusion:** Neutral class has INVERSE relationship with oversampling!
+
+#### **Training Progress (Key Epochs)**
+
+| Epoch | Val Loss | Sent F1 | Pol F1 | Macro F1 | Notes             |
+| ----- | -------- | ------- | ------ | -------- | ----------------- |
+| 10    | 0.1253   | 67.74%  | 56.96% | 62.35%   | Peak so far       |
+| 13    | 0.1120   | 63.69%  | 59.26% | 61.48%   | Sentiment dropped |
+| 15    | 0.0769   | 66.01%  | 60.09% | 63.05%   | Slight recovery   |
+| 18    | 0.0988   | 66.37%  | 60.19% | 63.28%   | Stable            |
+| 21    | 0.0585   | 66.96%  | 59.50% | 63.23%   | Final (stopped)   |
+
+**Analysis:**
+
+- Training was unstable throughout
+- Peak validation at epoch 10, then degraded
+- Sentiment F1 fluctuated wildly (63-67%)
+- Polarization F1 relatively stable but low
+- **Final result worse than peak!**
+- **Conclusion:** Model never converged properly
+
+---
+
+### 💡 CRITICAL INSIGHTS FROM RUN #7
+
+#### **Major Discovery: Oversampling Paradox** 🚨
+
+**The "bug fix" that made things worse:**
+
+1. Run #6: Neutral had only 227 samples (bug) → 60.33% F1 (BEST!)
+2. Run #7: Neutral had 1874 samples (fixed) → 57.63% F1 (WORSE!)
+
+**This reveals:**
+
+- Neutral class BENEFITS from minimal oversampling
+- More neutral samples = more overfitting = worse generalization
+- **Optimal neutral boost: 0.5-1.0x, not 2.0-2.5x!**
+
+#### **What We Learned:**
+
+1. 🚨 **Neutral Oversampling Paradox**
+
+   - Less is more for neutral class
+   - 227 samples > 1874 samples
+   - **Optimal:** Minimal or no neutral oversampling
+
+2. 🔴 **Objective Unfixable via Oversampling**
+
+   - 4.5x, 5.0x, 6.0x all fail
+   - 90 samples too small for oversampling
+   - **Need:** Data augmentation, not oversampling
+
+3. ⚖️ **Focal Gamma Trade-offs**
+
+   - 3.2: Helps non-polarized, hurts partisan
+   - 3.5: Helps partisan, hurts non-polarized
+   - **Need:** Find middle ground (3.3-3.4?)
+
+4. 🔴 **Training Instability**
+
+   - Model didn't converge properly
+   - Sentiment F1 fluctuated wildly
+   - **Need:** Better training stability
+
+5. 🎯 **Run #5 Still Best Overall**
+   - 67.20% macro-F1 (vs 65.60% now)
+   - Better balance across all classes
+   - **Conclusion:** Need to return closer to Run #5 config
+
+#### **What's Blocking 75% Target:**
+
+| Issue                  | Impact on Overall F1 | Current | Target | Gap     | Priority | Change from R5  |
+| ---------------------- | -------------------- | ------- | ------ | ------- | -------- | --------------- |
+| **Objective recall**   | ~2.5%                | 33.33%  | 75%    | -41.67% | 🔴 P0    | Worse (-4.45%)  |
+| **Partisan recall**    | ~2.0%                | 74.74%  | 85%+   | -10.26% | 🔴 P0    | Worse (-10.62%) |
+| **Neutral precision**  | ~1.5%                | 48.47%  | 75%    | -26.53% | 🔴 P0    | Worse (-2.44%)  |
+| **Positive precision** | ~1.0%                | 73.71%  | 75%+   | -1.29%  | 🟡 P1    | Worse (-1.34%)  |
+
+**Total gap to 75%:** -9.40%  
+**Regression from peak:** -1.60%
+
+---
+
+### 🚀 RECOMMENDED NEXT STEPS FOR RUN #8
+
+#### **Goal: 68-70% Macro-F1 (RECOVERY to Run #5 level)**
+
+**Strategy: Return to Run #5 baseline + targeted fixes**
+
+#### **PRIORITY 1: Fix Neutral Oversampling** 🔴
+
+**Root Issue:** Neutral performs BETTER with LESS oversampling
+
+**Solution:**
+
+```python
+NEUTRAL_BOOST_MULT = 0.3  # DRASTICALLY REDUCE from 2.3 (target ~225 samples like Run #6!)
+```
+
+**Rationale:** Run #6's 227 samples achieved 60.33% F1 (best neutral performance)
+
+**Expected Impact:** +2-3% neutral F1 → +0.5-1.0% overall F1
+
+#### **PRIORITY 2: Abandon Objective Oversampling** 🔴
+
+**Root Issue:** 90 samples too small, ALL oversampling levels (4.5x, 5.0x, 6.0x) fail
+
+**Solution:**
+
+```python
+OBJECTIVE_BOOST_MULT = 3.5  # REDUCE from 5.0 (minimize overfitting)
+# OR implement data augmentation instead
+```
+
+**Expected Impact:** Stop bleeding (-1.29% regression → flat or +0.5%)
+
+#### **PRIORITY 3: Fix Focal Gamma** ⚖️
+
+**Root Issue:** 3.2 hurts partisan (-10.62% recall), 3.5 hurts non-polarized
+
+**Solution:**
+
+```python
+FOCAL_GAMMA_POLARITY = 3.3  # MIDDLE GROUND between 3.2 and 3.5
+```
+
+**Expected Impact:** +2-4% partisan recall → +1.0-1.5% overall F1
+
+#### **PRIORITY 4: Return to Run #5 Baseline** 🔄
+
+**What worked in Run #5:**
+
+- Overall: 67.20% (vs 65.60% now)
+- Better balance across all classes
+- More stable training
+
+**Solution:**
+
+```python
+LABEL_SMOOTH_SENTIMENT = 0.10  # REVERT from 0.12 (Run #5 level)
+EPOCHS = 20                     # REDUCE from 22 (Run #5 level)
+```
+
+**Expected Impact:** +1.0-1.5% overall F1 (recover stability)
+
+---
+
+### 📊 RUN #8 CONFIGURATION (PROPOSED)
+
+```python
+# ============================================================================
+# CORE TRAINING - RUN #8 RECOVERY (68-70% MACRO-F1 TARGET)
+# Run #7 Result: 65.6% macro-F1 (REGRESSION: -1.33% from Run #6, -1.60% from Run #5)
+# Run #8 Goal: Return to Run #5 baseline + fix neutral paradox
+# Strategy: Minimal neutral oversampling (0.3x), focal gamma 3.3, stability fixes
+# ============================================================================
+
+EPOCHS = 20                # REDUCE from 22 (back to Run #5 stability)
+LR = 3.0e-5               # KEEP (proven optimal!)
+NUM_CYCLES = 0.5          # KEEP (proven optimal!)
+EARLY_STOP_PATIENCE = 6   # KEEP (proven optimal!)
+
+# Focal Loss - FIND MIDDLE GROUND
+FOCAL_GAMMA_SENTIMENT = 2.5   # KEEP (working well)
+FOCAL_GAMMA_POLARITY = 3.3    # MIDDLE GROUND (3.2→3.3) - balance partisan + non-polarized
+
+# Label Smoothing - REVERT TO RUN #5
+LABEL_SMOOTH_SENTIMENT = 0.10  # REVERT from 0.12 (Run #5 level)
+LABEL_SMOOTH_POLARITY = 0.08   # KEEP (proven optimal)
+
+# Class Weights - KEEP (working)
+CLASS_WEIGHT_MULT = {
+    "sentiment": {
+        "negative": 1.05,  # KEEP
+        "neutral":  1.70,  # KEEP
+        "positive": 1.35   # KEEP
+    },
+    "polarization": {
+        "non_polarized": 1.25,  # KEEP
+        "objective":     2.80,  # KEEP
+        "partisan":      0.90   # KEEP
+    }
+}
+
+# Oversampling - FIX NEUTRAL PARADOX!
+OBJECTIVE_BOOST_MULT = 3.5  # REDUCE from 5.0 (minimize overfitting)
+NEUTRAL_BOOST_MULT = 0.3    # DRASTICALLY REDUCE from 2.3 (target ~225 samples!)
+```
+
+**Expected Results:**
+
+- Overall: 68-70% macro-F1 (+2-4% recovery)
+- Neutral: 60-62% F1 (+3-4% from minimal oversampling!)
+- Objective: 42-44% F1 (+2% from reduced overfitting)
+- Partisan: 83-85% F1 (+3-4% recall recovery)
+- Max oversampling: ~22-24 (safer)
+
+---
+
+### 📝 SUMMARY & CONCLUSIONS - RUN #7
+
+**🔴 COMPLETE FAILURE!**
+
+**What Failed:**
+
+1. 🚨 **Neutral oversampling paradox** - More samples = worse performance!
+2. 🔴 **Objective still overfits** - 5.0x no better than 6.0x
+3. 🔴 **Partisan recall collapsed** - Focal gamma 3.2 hurt majority class
+4. 🔴 **Training unstable** - Sentiment F1 fluctuated wildly
+5. 🔴 **ALL metrics regressed** - Worse than both Run #6 and Run #5
+
+**🎯 CRITICAL DISCOVERY:**
+
+**Neutral class has INVERSE relationship with oversampling:**
+
+- Run #6: 227 samples → 60.33% F1 (BEST!)
+- Run #7: 1874 samples → 57.63% F1 (WORST!)
+- **Conclusion:** Neutral needs MINIMAL oversampling (0.3-0.5x)!
+
+**🎯 PATH TO 75%:**
+
+- **Gap:** -9.40% (from 65.60% to 75%)
+- **Current position:** Worse than Run #5 peak (67.20%)
+- **Estimated runs needed:** 3-4 more runs
+- **Confidence:** 🟡 MEDIUM - Need to stabilize first
+- **ETA:** Run #10-11 (7-9 total runs)
+
+**💡 KEY LESSONS:**
+
+1. 🔑 **Less is more for neutral** - Minimal oversampling best
+2. 🔑 **Objective unfixable via oversampling** - Need different approach
+3. 🔑 **Focal gamma needs fine-tuning** - 3.3-3.4 likely optimal
+4. 🔑 **Run #5 baseline was better** - Need to return closer
+5. 🔑 **Training stability crucial** - Fluctuations indicate problems
+
+**Next Action:** Implement Run #8 with minimal neutral oversampling + return to Run #5 baseline! 🔄
+
+---
+
+## 🏃 RUN #6 - MIXED RESULTS ⚠️
 
 **Date:** 2025-10-25  
 **Model:** xlm-roberta-base  
