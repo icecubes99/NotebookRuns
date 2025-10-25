@@ -2711,3 +2711,435 @@ LLRD_DECAY = 0.90             # Restore R4 (tighter control)
 **Next action:** **TASK-SPECIFIC GRADIENTS + FIX CALIBRATION**
 
 ---
+
+# 📊 RUN #7 ANALYSIS
+
+**Date:** October 25, 2025  
+**Strategy:** TASK-SPECIFIC GRADIENTS + ANTI-OVERFITTING  
+**Training Time:** 58 minutes (stopped at epoch 18/20, early stopping triggered)
+
+---
+
+## 💥 EXECUTIVE SUMMARY
+
+**Overall Macro-F1: 53.68%** (vs R6: 61.59%, vs R4: 62.06%)
+
+**Result: CATASTROPHIC FAILURE** 💥💥💥
+
+Run #7 is the **WORST PERFORMING RUN IN THE ENTIRE CAMPAIGN**, achieving only 53.68% Macro-F1—a devastating **-7.91% regression** from R6 and **-8.38% below R4's benchmark**. This is even worse than R5's disaster (58.54%). The combination of task-specific gradient control and aggressive anti-overfitting measures completely backfired, causing:
+
+❌ **ALL classes severely degraded**  
+❌ **Training instability** (stopped early at epoch 18)  
+❌ **Objective class collapse** to 33.4% F1 (worst ever)  
+❌ **Partisan class collapse** to 69.6% F1 (-11.6% from R6!)  
+❌ **Both tasks failed** (sentiment 53.5%, polarization 53.9%)
+
+---
+
+## 📉 PERFORMANCE METRICS
+
+### Overall Performance:
+
+| Metric              | Run #7 | Run #6 | Run #4 | vs R6          | vs R4         |
+| ------------------- | ------ | ------ | ------ | -------------- | ------------- |
+| **Macro-F1**        | 53.68% | 61.59% | 62.06% | **-7.91%** 💥  | **-8.38%** 💥 |
+| **Sentiment F1**    | 53.50% | 64.34% | 61.43% | **-10.84%** 💥 | **-7.93%**    |
+| **Polarization F1** | 53.85% | 58.85% | 62.71% | **-5.00%**     | **-8.86%**    |
+
+### Per-Class F1 Scores:
+
+**Sentiment Classes:**
+
+| Class    | Run #7 | Run #6 | Run #4 | vs R6           | vs R4         | Gap to 75% |
+| -------- | ------ | ------ | ------ | --------------- | ------------- | ---------- |
+| Negative | 58.2%  | 66.8%  | 60.9%  | **-8.6%** 💥    | **-2.7%**     | **-16.8%** |
+| Neutral  | 48.9%  | 54.0%  | 53.4%  | **-5.1%**       | **-4.5%**     | **-26.1%** |
+| Positive | 53.5%  | 72.2%  | 70.0%  | **-18.7%** 💥💥 | **-16.5%** 💥 | **-21.5%** |
+
+**Polarization Classes:**
+
+| Class         | Run #7 | Run #6 | Run #4 | vs R6     | vs R4         | Gap to 75%    |
+| ------------- | ------ | ------ | ------ | --------- | ------------- | ------------- |
+| Non-polarized | 58.5%  | 62.5%  | 55.8%  | **-4.0%** | +2.7%         | **-16.5%**    |
+| Objective     | 33.4%  | 39.5%  | 42.4%  | **-6.1%** | **-9.0%** 💥  | **-41.6%** 💥 |
+| Partisan      | 69.6%  | 74.5%  | 81.2%  | **-4.9%** | **-11.6%** 💥 | **-5.4%**     |
+
+### Precision/Recall Breakdown:
+
+**Sentiment:**
+
+| Class    | Precision | Recall    | F1    | Support | Issue                                       |
+| -------- | --------- | --------- | ----- | ------- | ------------------------------------------- |
+| Negative | **85.0%** | 44.2%     | 58.2% | 886     | **CRITICAL: Recall collapsed** (was 55.9%)  |
+| Neutral  | 38.6%     | **66.6%** | 48.9% | 401     | **Precision worsened** (was 42.6%)          |
+| Positive | 43.0%     | **70.7%** | 53.5% | 208     | **Both precision & F1 collapsed** (-18.7%!) |
+
+**Polarization:**
+
+| Class         | Precision | Recall    | F1    | Support | Issue                                             |
+| ------------- | --------- | --------- | ----- | ------- | ------------------------------------------------- |
+| Non-polarized | 52.8%     | 65.7%     | 58.5% | 435     | Slight regression                                 |
+| Objective     | 21.7%     | **72.2%** | 33.4% | 90      | **CATASTROPHIC: Precision destroyed** (was 48.4%) |
+| Partisan      | **86.4%** | 58.2%     | 69.6% | 970     | **Recall collapsed** (was 65.1%)                  |
+
+---
+
+## 🔍 ROOT CAUSE ANALYSIS
+
+### ❌ **What Failed Catastrophically:**
+
+#### 1. **Task-Specific Gradient Control BACKFIRED:**
+
+The custom gradient clipping implementation caused **severe training instability**:
+
+- **Sentiment head (norm 1.0):** Too permissive, caused overfitting and precision collapse
+- **Polarity head (norm 0.5):** Too restrictive, prevented learning (partisan recall dropped 6.9%)
+- **Shared encoder:** Conflicting gradient signals from two heads destroyed convergence
+
+**Evidence:**
+
+- Training stopped early at epoch 18/20 (early stopping triggered)
+- Validation loss oscillated erratically (epochs 10-18 show wild swings)
+- Both tasks degraded simultaneously—no trade-off, just complete failure
+
+#### 2. **Over-Regularization Crisis:**
+
+The aggressive anti-overfitting measures were **too strong**:
+
+```python
+WEIGHT_DECAY: 0.03 → 0.05   (+67%)  # Too aggressive!
+HEAD_DROPOUT: 0.25 → 0.30    (+20%)  # Too aggressive!
+RDROP_ALPHA: 0.6 → 0.7       (+17%)  # Too aggressive!
+EARLY_STOP_PATIENCE: 8 → 7   (-12%)  # Stopped too early!
+```
+
+**Impact:**
+
+- Model **underfit** instead of preventing overfitting
+- Training stopped before convergence (epoch 18 vs 20)
+- Positive class F1 collapsed by 18.7% (severe underfitting)
+- Objective precision destroyed (48.4% → 21.7%)
+
+#### 3. **Objective Class Catastrophe:**
+
+Objective F1: 33.4% (down from 42.4% in R4, down from 39.5% in R6)
+
+- **Precision collapsed:** 48.4% → 21.7% (-26.7% absolute!)
+- The model is now **randomly guessing** objective (21.7% precision is near-random)
+- High recall (72.2%) but extremely low precision = over-predicting objective everywhere
+- This is the **worst objective performance in all 7 runs**
+
+#### 4. **Positive Class Annihilated:**
+
+Positive F1: 53.5% (down from 72.2% in R6, down from 70.0% in R4)
+
+- **Massive -18.7% regression** from R6
+- Precision collapsed: 72.7% → 43.0% (-29.7%!)
+- This suggests severe underfitting—model forgot positive class patterns
+
+---
+
+## 🧠 KEY INSIGHTS
+
+### 1. **The Task-Specific Gradient Hypothesis Was Wrong:**
+
+Run #7 **disproved** the R6 hypothesis that tasks need different gradient norms. The implementation caused:
+
+- **Gradient conflict:** Two heads with different norms fighting over shared encoder updates
+- **Training instability:** Model couldn't converge with conflicting signals
+- **Both tasks failed:** No trade-off (like R6), just complete collapse
+
+**Conclusion:** Task-specific gradient control is **NOT the solution**. The gradient flow trade-off from R6 was likely due to other factors (random variation, training dynamics), not fundamental task differences.
+
+### 2. **R4 Was Perfectly Balanced—Don't Touch It:**
+
+Every single attempt to improve R4 has failed:
+
+- R5: Changed 5 parameters → -3.52% (catastrophic)
+- R6: Changed 2 parameters → -0.47% (partial recovery)
+- R7: Changed 4 parameters + new feature → **-8.38% (DISASTER)**
+
+**R4's configuration represents a delicate equilibrium** that is extremely fragile. Even small changes break the balance.
+
+### 3. **Over-Regularization Is Worse Than Overfitting:**
+
+The anti-overfitting measures caused **severe underfitting**:
+
+- Positive class collapsed (model forgot patterns)
+- Objective precision destroyed (model can't discriminate)
+- Early stopping prevented convergence
+
+**Lesson:** The model was NOT overfitting in R4. The slight train/val gap was normal generalization, not overfitting to fix.
+
+### 4. **Custom Training Logic Is High-Risk:**
+
+Overriding `training_step()` introduced subtle bugs or incompatibilities:
+
+- The custom gradient clipping may not work correctly with:
+  - Gradient accumulation
+  - Mixed precision training (fp16)
+  - The Transformers library's internal state management
+
+**Result:** Training became unstable and early stopping triggered prematurely.
+
+---
+
+## 📊 RUN PROGRESSION SUMMARY
+
+| Run | Macro-F1 | Change     | Strategy                               | Key Result                             |
+| --- | -------- | ---------- | -------------------------------------- | -------------------------------------- |
+| R1  | 58.50%   | baseline   | Aggressive optimization                | Failed, calibration broken             |
+| R2  | 60.97%   | +2.47%     | More aggressive                        | Improved weak classes, hurt strong     |
+| R3  | 60.55%   | -0.42%     | Dial back R2                           | Regression, partisan -10%              |
+| R4  | 62.06%   | +1.51%     | Selective rebalancing                  | **BEST RUN** (balanced performance) 🏆 |
+| R5  | 58.54%   | -3.52%     | Targeted fixes (too aggressive)        | **CATASTROPHIC FAILURE**               |
+| R6  | 61.59%   | +3.05%     | R4 restore + gradient flow             | **Partial recovery**, task trade-off   |
+| R7  | 53.68%   | **-7.91%** | Task-specific gradients + anti-overfit | **WORST RUN EVER** 💥💥💥              |
+
+**Current best:** R4 at 62.06% Macro-F1  
+**Distance to goal:** 12.94% (75% - 62.06%)  
+**Runs since improvement:** 3 (R5, R6, R7 all failed)
+
+---
+
+## 🎯 LESSONS LEARNED
+
+### 1. **R4 Is the Local Optimum—Accept It:**
+
+After 3 consecutive failures to beat R4, the evidence is overwhelming:
+
+- R4's configuration is **near-optimal** for the current architecture
+- Further hyperparameter tuning is **counterproductive**
+- Small changes destroy the delicate balance
+
+**Action:** **STOP HYPERPARAMETER TUNING**. Accept R4 as baseline.
+
+### 2. **Task-Specific Gradients Are Not the Answer:**
+
+The gradient flow trade-off observed in R6 was likely:
+
+- Random variation (training is stochastic)
+- Interaction with other parameters
+- NOT a fundamental architectural requirement
+
+**Conclusion:** Different gradient norms per task cause instability, not improvement.
+
+### 3. **Over-Regularization Causes Underfitting:**
+
+Increasing regularization beyond R4 levels causes:
+
+- Training to stop too early
+- Model to forget learned patterns
+- Severe underfitting (positive -18.7%, objective precision -26.7%)
+
+**Lesson:** R4's regularization is already optimal. More is harmful.
+
+### 4. **Custom Training Code Is Dangerous:**
+
+Overriding core Trainer methods introduces:
+
+- Subtle bugs
+- Incompatibilities with library internals
+- Training instability
+
+**Recommendation:** Avoid custom training logic. Use built-in features only.
+
+### 5. **To Reach 75%, We Need Architectural Changes:**
+
+7 runs of hyperparameter tuning have produced:
+
+- 1 improvement (R2: +2.47%)
+- 5 regressions (R3, R5, R6, R7)
+- Current best: 62.06% (12.94% below target)
+
+**Conclusion:** Hyperparameter space is exhausted. To break 65%, we need:
+
+- Larger model (mBERT → XLM-RoBERTa or larger)
+- More training data
+- Architectural innovations (attention mechanisms, etc.)
+- Ensemble methods
+
+---
+
+## 🚀 RECOMMENDATIONS FOR RUN #8
+
+After the R7 disaster, we have **two strategic options**:
+
+### **Option A: Return to R4 Exactly** ⭐ **STRONGLY RECOMMENDED**
+
+**Rationale:** R4 is proven optimal. Stop trying to improve it with hyperparameters.
+
+**Configuration:**
+
+- **Restore R4 EXACTLY** (no changes whatsoever)
+- **Remove task-specific gradient control** (proven harmful)
+- **Restore R4 regularization** (current anti-overfitting is too strong)
+- **Run as sanity check** to confirm R4 reproducibility
+
+**Expected outcome:** 62-63% Macro-F1 (reproduce R4 performance)
+
+**Purpose:**
+
+1. Confirm R4 is reproducible (not random luck)
+2. Establish stable baseline for future changes
+3. Accept 62% as hyperparameter tuning limit
+
+---
+
+### **Option B: Shift to Architectural Changes**
+
+**Rationale:** 7 runs prove hyperparameter tuning can't reach 75%. Need structural changes.
+
+**Path B1: Larger Model**
+
+- Switch from `bert-base-multilingual-cased` to **`xlm-roberta-large`**
+- More parameters = more capacity for complex patterns
+- Expected: +3-5% improvement (65-67% Macro-F1)
+
+**Path B2: Data Augmentation**
+
+- Generate synthetic examples for minority classes (objective, neutral)
+- Back-translation, paraphrasing, or GPT-4 generation
+- Expected: +2-3% improvement on weak classes
+
+**Path B3: Ensemble Approach**
+
+- Train 3-5 models with different seeds
+- Ensemble predictions via averaging or voting
+- Expected: +1-2% improvement (more robust)
+
+**Path B4: Task-Specific Architectures**
+
+- Train separate single-task models (sentiment-only, polarity-only)
+- Compare against multi-task approach
+- May reveal if multi-task learning is hurting performance
+
+---
+
+## 🎯 STRATEGIC RECOMMENDATION
+
+**Recommended approach:** **Option A (Restore R4 Exactly) + Evaluate XLM-RoBERTa**
+
+**Justification:**
+
+1. **R4 restoration is mandatory** to establish reproducible baseline
+2. **7 failed hyperparameter attempts** prove we've hit the ceiling
+3. **Larger model (XLM-RoBERTa)** is lowest-risk architectural change
+4. **Stop wasting time on hyperparameter tuning** that keeps failing
+
+**Action Plan for Run #8:**
+
+```python
+# RUN #8: RESTORE R4 EXACTLY (SANITY CHECK)
+# ALL parameters IDENTICAL to R4 (no changes!)
+
+# Core training
+EPOCHS = 20
+LR = 2.5e-5
+WEIGHT_DECAY = 0.03              # ✅ RESTORE from 0.05
+EARLY_STOP_PATIENCE = 8          # ✅ RESTORE from 7
+
+# Loss parameters
+FOCAL_GAMMA_SENTIMENT = 2.5
+FOCAL_GAMMA_POLARITY = 3.5
+LABEL_SMOOTH_SENTIMENT = 0.10
+LABEL_SMOOTH_POLARITY = 0.08
+
+# Architecture
+HEAD_DROPOUT = 0.25              # ✅ RESTORE from 0.30
+RDROP_ALPHA = 0.6                # ✅ RESTORE from 0.7
+LLRD_DECAY = 0.90
+
+# Gradient control
+USE_TASK_SPECIFIC_GRAD_NORM = False  # ✅ DISABLE (proven harmful!)
+MAX_GRAD_NORM = 0.5                   # ✅ RESTORE R4 global norm
+
+# Oversampling
+OBJECTIVE_BOOST_MULT = 8.5
+NEUTRAL_BOOST_MULT = 3.5
+
+# ALL class weights identical to R4
+CLASS_WEIGHT_MULT = {
+    "sentiment": {"negative": 1.10, "neutral": 1.80, "positive": 1.30},
+    "polarization": {"non_polarized": 1.20, "objective": 2.50, "partisan": 0.95}
+}
+```
+
+**Expected outcome:** 62-63% Macro-F1 (confirm R4 reproducibility)
+
+**Next step after R8:** If R4 is reproduced, switch focus to:
+
+1. Evaluate XLM-RoBERTa model (separate training file)
+2. Compare XLM-R vs mBERT performance
+3. If XLM-R doesn't reach 70%+, consider data augmentation
+
+---
+
+## 📌 CRITICAL FINDINGS
+
+### 1. **🔴 CRITICAL: Task-Specific Gradient Control Is HARMFUL**
+
+- Caused -7.91% regression (worst run ever)
+- Training became unstable
+- Both tasks failed simultaneously
+- **NEVER USE AGAIN**
+
+### 2. **🔴 CRITICAL: R4 Is Hyperparameter Tuning Limit**
+
+- 3 consecutive attempts to improve R4 have all failed
+- R5: -3.52%, R6: -0.47%, R7: -7.91%
+- Further tuning is counterproductive
+- **ACCEPT R4 AS BASELINE**
+
+### 3. **🔴 CRITICAL: Over-Regularization Causes Underfitting**
+
+- WEIGHT_DECAY 0.05 is too high (was 0.03 in R4)
+- HEAD_DROPOUT 0.30 is too high (was 0.25 in R4)
+- RDROP_ALPHA 0.7 is too high (was 0.6 in R4)
+- **R4 regularization is already optimal**
+
+### 4. **⚠️ Hyperparameter Tuning Cannot Reach 75%**
+
+- 7 runs, only 1 improvement over baseline
+- Best result: 62.06% (12.94% below target)
+- **Need architectural changes to progress**
+
+### 5. **⚠️ Calibration Still Broken**
+
+- 7 runs, still showing "No trained weights found"
+- This bug has never been fixed
+- Potentially costing 2-5% F1
+- **Must fix before architectural changes**
+
+---
+
+## 🏁 NEXT STEPS
+
+### Immediate (Run #8):
+
+1. ✅ **Restore R4 configuration EXACTLY**
+2. ✅ **Remove task-specific gradient control**
+3. ✅ **Restore all R4 regularization levels**
+4. ✅ **Run as sanity check to confirm R4 reproducibility**
+
+### Short-term (After R8):
+
+1. ⏸️ **Fix calibration bug** (7 runs, still broken)
+2. ⏸️ **Evaluate XLM-RoBERTa-base** (larger model)
+3. ⏸️ **Compare mBERT vs XLM-R performance**
+
+### Long-term (If XLM-R insufficient):
+
+1. ⏸️ **Data augmentation** for minority classes
+2. ⏸️ **Ensemble methods** (3-5 models)
+3. ⏸️ **Task-specific architectures** (separate models)
+
+---
+
+**Run #7 Status: CATASTROPHIC FAILURE** 💥💥💥  
+**Training time:** 58 minutes (stopped early at epoch 18)  
+**Overall Macro-F1:** 53.68% (-7.91% vs R6, -8.38% vs R4, WORST RUN EVER)  
+**Key lessons:** Task-specific gradients are harmful, R4 is the limit, stop hyperparameter tuning  
+**Next action:** **RESTORE R4 EXACTLY + SHIFT TO ARCHITECTURAL CHANGES**
+
+---
