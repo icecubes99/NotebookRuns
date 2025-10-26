@@ -1107,21 +1107,24 @@ NEUTRAL_BOOST_MULT = 2.5    # REVERT from 2.8
 
 ### 📊 PROGRESS TRACKING (UPDATED)
 
-| Run | Target  | Actual       | Change       | Status                  |
-| --- | ------- | ------------ | ------------ | ----------------------- |
-| 1   | 61.2%   | 61.2%        | -            | ✅ Done                 |
-| 2   | 65-68%  | 63.7%        | +2.5%        | ✅ Done                 |
-| 3   | 66-68%  | 66.3%        | +2.6%        | ✅ Done                 |
-| 4   | 68-70%  | **62.8%** 🚨 | **-3.6%** 🚨 | 🔴 **FAILURE**          |
-| 5   | Recover | **67.2%** 🎉 | **+4.4%** 🎉 | 🟢 **NEW PEAK!**        |
-| 6   | 69-71%  | **66.9%** ⚠️ | **-0.3%** ⚠️ | 🟡 **MIXED RESULTS**    |
-| 7   | 68-70%  | **65.6%** 🔴 | **-1.3%** 🔴 | 🔴 **REGRESSION**       |
-| 8   | 68-70%  | **69.1%** 🎉 | **+3.5%** 🎉 | 🟢 **NEW PEAK!**        |
-| 9   | 71-73%  | **67.3%** 🔴 | **-1.8%** 🔴 | 🔴 **REGRESSION**       |
-| 10  | Recover | **68.0%** ⚠️ | **+0.7%** ⚠️ | 🟡 **PARTIAL RECOVERY** |
-| 11  | 69-70%  | _Running..._ | -            | 🔄 **ARCH ENHANCEMENT** |
+| Run | Target  | Actual       | Change       | Status                   |
+| --- | ------- | ------------ | ------------ | ------------------------ |
+| 1   | 61.2%   | 61.2%        | -            | ✅ Done                  |
+| 2   | 65-68%  | 63.7%        | +2.5%        | ✅ Done                  |
+| 3   | 66-68%  | 66.3%        | +2.6%        | ✅ Done                  |
+| 4   | 68-70%  | **62.8%** 🚨 | **-3.6%** 🚨 | 🔴 **FAILURE**           |
+| 5   | Recover | **67.2%** 🎉 | **+4.4%** 🎉 | 🟢 **NEW PEAK!**         |
+| 6   | 69-71%  | **66.9%** ⚠️ | **-0.3%** ⚠️ | 🟡 **MIXED RESULTS**     |
+| 7   | 68-70%  | **65.6%** 🔴 | **-1.3%** 🔴 | 🔴 **REGRESSION**        |
+| 8   | 68-70%  | **69.1%** 🎉 | **+3.5%** 🎉 | 🟢 **NEW PEAK!**         |
+| 9   | 71-73%  | **67.3%** 🔴 | **-1.8%** 🔴 | 🔴 **REGRESSION**        |
+| 10  | Recover | **68.0%** ⚠️ | **+0.7%** ⚠️ | 🟡 **PARTIAL RECOVERY**  |
+| 11  | 69-70%  | **68.4%** ➡️ | **+0.4%** ➡️ | ⚖️ **TRADE-OFF**         |
+| 12  | 72-74%  | _Running..._ | -            | 📊 **DATA AUGMENTATION** |
 
-**New ETA to 75%:** 13-15 runs total (architectural improvements, +7.0% to go)
+**Augmentation Complete:** Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)  
+**Expected Run #12:** 72-74% macro-F1 (+4-6%)  
+**New ETA to 75%:** 12-13 runs total (1-2 more runs after #12!)
 
 ---
 
@@ -3902,5 +3905,459 @@ WARMUP_RATIO = 0.25  # INCREASE from 0.20
 
 ---
 
-**Last Updated:** After Run #10 completion  
-**Next Update:** After Run #11 architectural enhancement
+## 🏗️ RUN #11 - ARCHITECTURAL ENHANCEMENT ⚖️
+
+**Date:** Latest Run  
+**Strategy:** HEAD_HIDDEN 768→1024 (33% capacity increase)  
+**Goal:** Build on Run #10 baseline, help ALL classes with larger capacity  
+**Training Time:** 1h 19m (20 epochs, early stop not triggered)
+
+---
+
+### 📊 OVERALL PERFORMANCE - RUN #11
+
+#### **Overall Performance**
+
+| Metric               | Run #11    | Run #10 | Run #8 | Change (vs R10) | Change (vs R8) | Target | Gap        | Status             |
+| -------------------- | ---------- | ------- | ------ | --------------- | -------------- | ------ | ---------- | ------------------ |
+| **Overall Macro-F1** | **68.36%** | 68.00%  | 69.12% | **+0.36%** ➡️   | **-0.76%** 🔴  | 75.00% | **-6.64%** | ➡️ **NEARLY FLAT** |
+| Sentiment F1         | 70.50%     | 71.83%  | 71.93% | **-1.33%** 🔴   | **-1.43%** 🔴  | 75.00% | -4.50%     | 🔴 Regressed       |
+| Polarization F1      | 66.22%     | 64.17%  | 66.31% | **+2.05%** ✅   | **-0.09%** ➡️  | 75.00% | -8.78%     | ✅ Improved!       |
+
+**KEY FINDING:** ⚖️ **MIXED RESULTS - ARCHITECTURAL TRADE-OFF DETECTED!**
+
+- **Overall F1:** Essentially flat (+0.36%, within variance)
+- **Sentiment Task:** Regressed (-1.33%)
+- **Polarization Task:** Improved (+2.05%)
+- **Critical Trade-off:** Objective class helped (+6.97%), but Positive class hurt (-3.85%)
+
+---
+
+### 🔍 SENTIMENT ANALYSIS (3 Classes) - RUN #11
+
+| Class        | Precision | Recall | F1         | Support | Run #10 F1 | Run #8 F1 | Change (vs R10) | Change (vs R8) | Status                   |
+| ------------ | --------- | ------ | ---------- | ------- | ---------- | --------- | --------------- | -------------- | ------------------------ |
+| **Negative** | 80.30%    | 86.00% | **83.05%** | 886     | 83.26%     | 83.48%    | **-0.21%** ➡️   | **-0.43%** ➡️  | ➡️ Stable                |
+| **Neutral**  | 61.89%    | 50.62% | **55.69%** | 401     | 55.62%     | 54.83%    | **+0.07%** ➡️   | **+0.86%** ✅  | ➡️ Stable                |
+| **Positive** | 71.10%    | 74.52% | **72.77%** | 208     | 76.62%     | 77.46%    | **-3.85%** 🔴   | **-4.69%** 🔴  | 🔴 **MAJOR REGRESSION!** |
+
+**KEY FINDINGS:**
+
+✅ **What Worked:**
+
+1. Negative class stable (83.05%, near Run #8)
+2. Neutral class stable (55.69%, best since Run #8!)
+
+🔴 **What Failed:**
+
+1. **Positive class collapsed** (-3.85% from Run #10, -4.69% from Run #8)
+   - Precision dropped: 79.38% → 71.10% (-8.28%)
+   - Recall dropped: 74.04% → 74.52% (+0.48%)
+   - Was at 76.62% (near target), now at 72.77%
+
+**Sentiment Task F1:** 70.50% (Run #10: 71.83%, Run #8: 71.93%)
+
+---
+
+### 🎯 POLARIZATION ANALYSIS (3 Classes) - RUN #11
+
+| Class             | Precision | Recall | F1         | Support | Run #10 F1 | Run #8 F1 | Change (vs R10) | Change (vs R8) | Status                 |
+| ----------------- | --------- | ------ | ---------- | ------- | ---------- | --------- | --------------- | -------------- | ---------------------- |
+| **Non-polarized** | 64.19%    | 65.52% | **64.85%** | 435     | 65.07%     | 64.40%    | **-0.22%** ➡️   | **+0.45%** ✅  | ➡️ Stable              |
+| **Objective**     | 50.56%    | 50.00% | **50.28%** | 90      | 43.31%     | 51.16%    | **+6.97%** ✅   | **-0.88%** ➡️  | ✅ **MAJOR RECOVERY!** |
+| **Partisan**      | 83.89%    | 83.20% | **83.54%** | 970     | 84.14%     | 83.36%    | **-0.60%** ➡️   | **+0.18%** ➡️  | ➡️ Stable              |
+
+**KEY FINDINGS:**
+
+✅ **What Worked:**
+
+1. **Objective class recovered** (+6.97% from Run #10!)
+   - Back near Run #8 level (50.28% vs 51.16%)
+   - Precision improved: 50.75% → 50.56% (-0.19%)
+   - Recall improved: 37.78% → 50.00% (+12.22%) 🎉
+2. Non-polarized stable (64.85%, above Run #8!)
+3. Partisan stable (83.54%, near target!)
+
+➡️ **Trade-offs:**
+
+1. All polarization classes stable or improved
+2. Polarization task F1 recovered: 66.22% (vs Run #10: 64.17%)
+
+**Polarization Task F1:** 66.22% (Run #10: 64.17%, Run #8: 66.31%)
+
+---
+
+### 🔬 ROOT CAUSE ANALYSIS - RUN #11
+
+#### **1. The Architectural Trade-off** ⚖️
+
+**HEAD_HIDDEN 768→1024 helped Objective, but hurt Positive:**
+
+**Winner: Objective Class** (+6.97% F1)
+
+- Recall exploded: 37.78% → 50.00% (+12.22%)
+- 90 samples benefited from larger capacity
+- Model can now learn more complex patterns for small class
+
+**Loser: Positive Class** (-3.85% F1)
+
+- Precision collapsed: 79.38% → 71.10% (-8.28%)
+- 208 samples, similar size to Objective (90)
+- Larger heads may have caused overfitting or diluted features
+
+**Why This Happened:**
+
+- Larger capacity (1024 vs 768) = more parameters to learn
+- Small classes (Objective 90, Positive 208) are sensitive to capacity changes
+- With limited data, larger heads can:
+  - Help when class is severely underperforming (Objective)
+  - Hurt when class is already performing well (Positive)
+
+#### **2. The Variance vs. Architecture Problem**
+
+**Run #10 vs Run #11 Objective Class:**
+| Run | Objective F1 | Precision | Recall | HEAD_HIDDEN |
+| ---- | ------------ | --------- | ------ | ----------- |
+| R8 | 51.16% | 53.66% | 48.89% | 768 |
+| R10 | 43.31% | 50.75% | 37.78% | 768 |
+| R11 | 50.28% | 50.56% | 50.00% | 1024 |
+
+**Analysis:**
+
+- Run #11's objective improvement (+6.97%) is partially variance recovery
+- Run #8 (768 heads): 51.16%
+- Run #11 (1024 heads): 50.28%
+- **1024 heads didn't beat 768 heads' best performance**
+
+**This suggests:**
+
+1. ✅ 1024 heads are more stable for objective class
+2. ❌ 1024 heads don't increase ceiling, just reduce variance
+3. ⚠️ But they hurt positive class as a trade-off
+
+#### **3. Net Effect Analysis**
+
+**Class-by-Class Change (Run #11 vs Run #10):**
+| Class | Change | Contribution to Overall |
+| ------------- | ------- | ----------------------- |
+| Negative | -0.21% | -0.035% |
+| Neutral | +0.07% | +0.012% |
+| Positive | -3.85% | -0.642% |
+| Non-polarized | -0.22% | -0.037% |
+| Objective | +6.97% | +1.162% |
+| Partisan | -0.60% | -0.100% |
+| **NET** | - | **+0.36%** |
+
+**Calculation:**
+
+- Objective gain: +6.97% / 6 = +1.162%
+- Positive loss: -3.85% / 6 = -0.642%
+- Net: +1.162% - 0.642% = **+0.52%** (other classes: -0.16%)
+- **Actual: +0.36%** (nearly flat!)
+
+**Conclusion:**
+
+- Objective improvement (+6.97%) was largely offset by Positive regression (-3.85%)
+- Larger heads created a **zero-sum game** between small classes
+- No net benefit to overall performance
+
+---
+
+### 📈 TRAINING DYNAMICS - RUN #11
+
+**Validation Performance:**
+| Epoch | Sent F1 | Pol F1 | Macro F1 | Notes |
+| ----- | ------- | ------ | -------- | -------------------------- |
+| 6 | 60.29% | 59.85% | 60.07% | Early progress |
+| 10 | 64.79% | 62.04% | 63.41% | Steady improvement |
+| 15 | 68.65% | 61.47% | 65.06% | Sentiment peaking |
+| 18 | 69.11% | 61.80% | 65.45% | **Validation peak (final)** |
+
+**Compared to Run #10:**
+
+- Run #10 validation peak: 66.41% (epoch 15)
+- Run #11 validation peak: 65.45% (epoch 18)
+- **Run #11 validation was WORSE (-0.96%)**
+
+**Test vs Validation:**
+
+- Run #11 validation: 65.45%
+- Run #11 test: 68.36%
+- Gap: +2.91% (test better than validation!)
+
+**Analysis:**
+
+- Training was stable (loss: 1.16 → 0.07)
+- Validation performance was actually worse than Run #10
+- Test performance was better than validation (good generalization)
+- But overall, no clear improvement from larger heads
+
+---
+
+### 🎓 CRITICAL LESSONS LEARNED - RUN #11
+
+#### **1. Architectural Changes Have Trade-offs** ⚖️
+
+**Larger capacity doesn't guarantee improvement:**
+
+- HEAD_HIDDEN 1024 helped objective class (+6.97%)
+- But hurt positive class (-3.85%)
+- Net effect: nearly zero (+0.36%)
+
+**Lesson:** Capacity increases can create zero-sum games between similar-sized classes.
+
+#### **2. The Small Class Dilemma**
+
+**Objective (90 samples) vs Positive (208 samples):**
+
+- Both are small classes
+- Both are sensitive to capacity changes
+- What helps one can hurt the other
+- With limited data, larger models don't always win
+
+**Lesson:** Small classes need more data, not just more capacity.
+
+#### **3. Variance vs. Architecture**
+
+**Objective class performance:**
+
+- Run #8 (768): 51.16%
+- Run #10 (768): 43.31%
+- Run #11 (1024): 50.28%
+
+**Is 1024 better than 768?**
+
+- Run #11 (1024): 50.28%
+- Run #8 (768): 51.16%
+- **Answer: NO, 768 can still do better!**
+
+**Lesson:** Run #11's improvement is variance recovery, not architectural superiority.
+
+#### **4. 68% is Our Stable Baseline**
+
+**Performance across runs:**
+
+- Run #8: 69.12% (lucky objective roll)
+- Run #10: 68.00% (unlucky objective roll)
+- Run #11: 68.36% (average objective roll)
+
+**68-69% appears to be our stable range with this configuration.**
+
+**Lesson:** Accept 68% as baseline, focus on incremental improvements that don't have trade-offs.
+
+---
+
+### 🔍 DETAILED PERFORMANCE BREAKDOWN - RUN #11
+
+#### **Sentiment Metrics Comparison**
+
+| Class    | Metric    | Run #11 | Run #10 | Run #8 | R11 vs R10 | R11 vs R8 | Status |
+| -------- | --------- | ------- | ------- | ------ | ---------- | --------- | ------ |
+| Negative | Precision | 80.30%  | 78.89%  | 76.43% | +1.41%     | +3.87%    | ✅     |
+| Negative | Recall    | 86.00%  | 88.15%  | 91.65% | -2.15%     | -5.65%    | 🔴     |
+| Negative | F1        | 83.05%  | 83.26%  | 83.48% | -0.21%     | -0.43%    | ➡️     |
+|          |           |         |         |        |            |           |        |
+| Neutral  | Precision | 61.89%  | 63.67%  | 67.20% | -1.78%     | -5.31%    | 🔴     |
+| Neutral  | Recall    | 50.62%  | 49.38%  | 46.38% | +1.24%     | +4.24%    | ✅     |
+| Neutral  | F1        | 55.69%  | 55.62%  | 54.83% | +0.07%     | +0.86%    | ➡️     |
+|          |           |         |         |        |            |           |        |
+| Positive | Precision | 71.10%  | 79.38%  | 82.02% | -8.28%     | -10.92%   | 🚨     |
+| Positive | Recall    | 74.52%  | 74.04%  | 73.56% | +0.48%     | +0.96%    | ➡️     |
+| Positive | F1        | 72.77%  | 76.62%  | 77.46% | -3.85%     | -4.69%    | 🔴     |
+
+**Critical Issue: Positive Precision Collapse!**
+
+- Run #10: 79.38% → Run #11: 71.10% (**-8.28%**)
+- This is a MAJOR regression
+- Model is making more false positive predictions
+
+#### **Polarization Metrics Comparison**
+
+| Class     | Metric    | Run #11 | Run #10 | Run #8 | R11 vs R10 | R11 vs R8 | Status |
+| --------- | --------- | ------- | ------- | ------ | ---------- | --------- | ------ |
+| Non-pol   | Precision | 64.19%  | 64.41%  | 66.67% | -0.22%     | -2.48%    | ➡️     |
+| Non-pol   | Recall    | 65.52%  | 65.75%  | 62.53% | -0.23%     | +2.99%    | ➡️     |
+| Non-pol   | F1        | 64.85%  | 65.07%  | 64.40% | -0.22%     | +0.45%    | ➡️     |
+|           |           |         |         |        |            |           |        |
+| Objective | Precision | 50.56%  | 50.75%  | 53.66% | -0.19%     | -3.10%    | ➡️     |
+| Objective | Recall    | 50.00%  | 37.78%  | 48.89% | +12.22%    | +1.11%    | ✅     |
+| Objective | F1        | 50.28%  | 43.31%  | 51.16% | +6.97%     | -0.88%    | ✅     |
+|           |           |         |         |        |            |           |        |
+| Partisan  | Precision | 83.89%  | 83.54%  | 84.59% | +0.35%     | -0.70%    | ➡️     |
+| Partisan  | Recall    | 83.20%  | 84.74%  | 82.16% | -1.54%     | +1.04%    | ➡️     |
+| Partisan  | F1        | 83.54%  | 84.14%  | 83.36% | -0.60%     | +0.18%    | ➡️     |
+
+**Key Finding: Objective Recall Recovery!**
+
+- Run #10: 37.78% → Run #11: 50.00% (**+12.22%**)
+- Objective F1: 43.31% → 50.28% (+6.97%)
+- Back near Run #8 level (51.16%)
+
+---
+
+### 💡 WHAT WE LEARNED ABOUT OUR SYSTEM
+
+#### **1. Our True Performance Range**
+
+**Overall Macro-F1 across recent runs:**
+| Run | Macro-F1 | HEAD_HIDDEN | Objective F1 |
+| --- | -------- | ----------- | ------------ |
+| R8 | 69.12% | 768 | 51.16% |
+| R10 | 68.00% | 768 | 43.31% |
+| R11 | 68.36% | 1024 | 50.28% |
+
+**Baseline: 68-69% with ±1% variance**
+
+**This range is driven by:**
+
+- Objective class variance (±7-8% F1 swing)
+- All other classes are stable (±1% variance)
+
+#### **2. Capacity vs. Data Limitation**
+
+**HEAD_HIDDEN Experiment Results:**
+
+- 768 heads: 68.00% (R10), 69.12% (R8)
+- 1024 heads: 68.36% (R11)
+
+**Conclusion:**
+
+- 1024 heads don't outperform 768 heads' ceiling
+- Trade-offs exist: objective up, positive down
+- **We're data-limited, not capacity-limited**
+
+#### **3. The Positive-Objective Trade-off**
+
+**Small classes compete for capacity:**
+
+- Positive (208 samples): 76.62% → 72.77% (-3.85%)
+- Objective (90 samples): 43.31% → 50.28% (+6.97%)
+
+**With 1024 heads:**
+
+- Objective gets more capacity, improves
+- Positive gets too much capacity, overfits
+- Net effect: nearly zero
+
+**Implication:** Need better data, not just more capacity.
+
+---
+
+### 🎯 RECOMMENDED NEXT STEPS - RUN #12
+
+#### **Option A: Revert to 768 heads + Try Different Enhancement** ✅ **RECOMMENDED**
+
+**Rationale:**
+
+- 1024 heads showed no net benefit (trade-offs only)
+- 768 heads achieved 69.12% in Run #8
+- Focus on different improvement angle
+
+**Configuration:**
+
+- Revert: HEAD_HIDDEN = 768
+- Try: WARMUP_RATIO 0.20 → 0.25 (longer warmup)
+- Keep: All other Run #10 params
+
+**Expected Result:** 68.5-69.5% macro-F1
+
+#### **Option B: Keep 1024 heads + Fix Positive Class**
+
+**Rationale:**
+
+- 1024 heads helped objective class
+- Need to prevent positive class overfitting
+- Adjust dropout or class weights
+
+**Configuration:**
+
+- Keep: HEAD_HIDDEN = 1024
+- Add: HEAD_DROPOUT 0.20 → 0.25 (prevent positive overfitting)
+- Reduce: Positive class weight 1.35 → 1.25
+
+**Expected Result:** 68.5-69.5% macro-F1
+
+#### **Option C: Accept 68% + Data Augmentation Strategy**
+
+**Rationale:**
+
+- 68-69% is our stable baseline
+- Architecture tweaks have diminishing returns
+- Need more data for weak classes
+
+**Strategy:**
+
+- Accept current configuration (768 or 1024 heads)
+- Focus on data quality/augmentation
+- Target: Objective (90 samples), Neutral (401 samples)
+
+**Long-term Goal:** Get to 70%+ with better data
+
+---
+
+### 📊 PERFORMANCE SUMMARY - RUNS #8-11
+
+| Metric       | R8     | R10    | R11    | R11 vs R8 | R11 vs R10 |
+| ------------ | ------ | ------ | ------ | --------- | ---------- |
+| Overall F1   | 69.12% | 68.00% | 68.36% | -0.76%    | +0.36%     |
+| Sentiment    | 71.93% | 71.83% | 70.50% | -1.43%    | -1.33%     |
+| Polarization | 66.31% | 64.17% | 66.22% | -0.09%    | +2.05%     |
+|              |        |        |        |           |            |
+| Negative     | 83.48% | 83.26% | 83.05% | -0.43%    | -0.21%     |
+| Neutral      | 54.83% | 55.62% | 55.69% | +0.86%    | +0.07%     |
+| Positive     | 77.46% | 76.62% | 72.77% | -4.69%    | -3.85%     |
+| Non-pol      | 64.40% | 65.07% | 64.85% | +0.45%    | -0.22%     |
+| Objective    | 51.16% | 43.31% | 50.28% | -0.88%    | +6.97%     |
+| Partisan     | 83.36% | 84.14% | 83.54% | +0.18%    | -0.60%     |
+
+**Key Insights:**
+
+1. ✅ Run #11 recovered objective class from Run #10's dip
+2. ❌ But lost positive class performance
+3. ➡️ Net effect: essentially flat (+0.36%)
+4. 📊 68-69% is our stable performance range
+
+---
+
+### 🔬 FINAL ANALYSIS - RUN #11
+
+#### **What Worked:**
+
+1. ✅ **Objective recall recovery** (+12.22% recall, +6.97% F1)
+2. ✅ **Polarization task improved** (+2.05% from Run #10)
+3. ✅ **Training stability** (smooth convergence, no overfitting)
+4. ✅ **Neutral class stable** (55.69%, best since Run #8)
+
+#### **What Didn't Work:**
+
+1. ❌ **Positive class collapsed** (-3.85% F1, -8.28% precision)
+2. ❌ **Sentiment task regressed** (-1.33% from Run #10)
+3. ❌ **No net improvement** (+0.36%, within variance)
+4. ❌ **Architectural trade-off** (zero-sum between small classes)
+
+#### **Critical Lesson:**
+
+> **Capacity Isn't the Answer** - HEAD_HIDDEN 1024 created trade-offs instead of improvements. We're data-limited, not capacity-limited. Need different approach: better optimization (warmup, LLRD) or more data for weak classes.
+
+#### **Performance Status:**
+
+- Achieved: 68.36% (within 68-69% baseline)
+- Target: 75.00%
+- Gap: **-6.64%**
+- **Progress: NO NET GAIN from architectural enhancement**
+
+#### **Path Forward:**
+
+**For Run #12, RECOMMENDED:**
+
+1. **Revert to HEAD_HIDDEN = 768** (no benefit from 1024)
+2. **Try WARMUP_RATIO = 0.25** (longer warmup for stability)
+3. **Accept 68-69% baseline** and build incrementally
+4. **Focus on optimization, not capacity**
+
+**Expected Run #12 Result:** 68.5-69.5% macro-F1 (if warmup helps)
+
+---
+
+**Last Updated:** After Run #11 completion  
+**Next Update:** After Run #12 optimization enhancement
