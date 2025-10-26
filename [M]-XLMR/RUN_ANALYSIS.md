@@ -1117,9 +1117,10 @@ NEUTRAL_BOOST_MULT = 2.5    # REVERT from 2.8
 | 6   | 69-71%  | **66.9%** ⚠️ | **-0.3%** ⚠️ | 🟡 **MIXED RESULTS** |
 | 7   | 68-70%  | **65.6%** 🔴 | **-1.3%** 🔴 | 🔴 **REGRESSION**    |
 | 8   | 68-70%  | **69.1%** 🎉 | **+3.5%** 🎉 | 🟢 **NEW PEAK!**     |
-| 9   | 71-73%  | _Running..._ | -            | 🔄 **IN PROGRESS**   |
+| 9   | 71-73%  | **67.3%** 🔴 | **-1.8%** 🔴 | 🔴 **REGRESSION**    |
+| 10  | Recover | _Running..._ | -            | 🔄 **RECOVERY RUN**  |
 
-**New ETA to 75%:** 9-10 runs total (on track! +5.9% to go)
+**New ETA to 75%:** 11-12 runs total (recovery needed, +5.9% to go from Run #8)
 
 ---
 
@@ -2966,5 +2967,491 @@ NEUTRAL_BOOST_MULT = 2.0    # REDUCED from 2.5 (fix precision!)
 
 ---
 
-**Last Updated:** After Run #4 completion  
-**Next Update:** After Run #5 completion
+## 🏃 RUN #9 - OVERREACH REGRESSION 🔴
+
+**Date:** 2025-10-26  
+**Model:** xlm-roberta-base  
+**Training Duration:** 1 hour 50 minutes (110 minutes)  
+**Overall Result:** **67.32% Macro-F1** 🔴 **REGRESSION - TOO MANY CHANGES!**  
+**Status:** 🔴 **FAILURE** - Class weight + oversampling changes backfired!
+
+---
+
+### 📈 DETAILED PERFORMANCE METRICS
+
+#### **Overall Performance**
+
+| Metric               | Run #9     | Run #8 | Change     | Target | Gap        | Status              |
+| -------------------- | ---------- | ------ | ---------- | ------ | ---------- | ------------------- |
+| **Overall Macro-F1** | **67.32%** | 69.12% | **-1.80%** | 75.00% | **-7.68%** | 🔴 **REGRESSION!**  |
+| Sentiment F1         | 70.67%     | 71.93% | **-1.26%** | 75.00% | -4.33%     | 🔴 Slightly down    |
+| Polarization F1      | 63.97%     | 66.31% | **-2.34%** | 75.00% | -11.03%    | 🔴 Major regression |
+
+**KEY FINDING:** 🔴 **FAILED TO BUILD ON RUN #8 - CHANGES BACKFIRED!**
+
+- Overall: -1.80% from Run #8 peak (expected +2-4%!)
+- Sentiment: -1.26% (minor dip)
+- Polarization: -2.34% (major regression!)
+- **Missed 71-73% target by -3.68% to -5.68%!** 🚨
+
+---
+
+### 🔍 SENTIMENT ANALYSIS (3 Classes) - RUN #9
+
+| Class        | Precision | Recall | F1         | Support | Run #8 F1 | Change        | Status                    |
+| ------------ | --------- | ------ | ---------- | ------- | --------- | ------------- | ------------------------- |
+| **Negative** | 84.60%    | 71.90% | **77.73%** | 886     | 83.48%    | **-5.75%** 🔴 | 🔴 Major regression!      |
+| **Neutral**  | 52.79%    | 68.33% | **59.57%** | 401     | 54.83%    | **+4.74%** ✅ | 🟢 Improved! (as planned) |
+| **Positive** | 72.20%    | 77.40% | **74.71%** | 208     | 77.46%    | **-2.75%** 🔴 | 🔴 Regressed              |
+
+**KEY FINDINGS:**
+
+1. **Negative Collapse (-5.75%):**
+
+   - Precision: 79.29% → 84.60% (+5.31% ✅)
+   - Recall: 88.15% → 71.90% (-16.25% 🚨)
+   - **Root Cause:** Increased neutral weight (1.70→1.85) stole capacity from negative!
+   - **Impact:** Lost Run #8's biggest win!
+
+2. **Neutral Improvement (+4.74%):**
+
+   - Precision: 65.07% → 52.79% (-12.28% 🔴)
+   - Recall: 47.38% → 68.33% (+20.95% 🎉)
+   - **Mixed bag:** Recall recovered BUT precision catastrophically collapsed!
+   - **Net effect:** Not worth the negative/positive trade-off!
+
+3. **Positive Regression (-2.75%):**
+
+   - Precision: 75.69% → 72.20% (-3.49%)
+   - Recall: 79.33% → 77.40% (-1.93%)
+   - **Root Cause:** Increased neutral weight took samples away!
+
+**Critical Insight:** Run #8's minimal neutral oversampling (0.3x) was perfect! Increasing to 0.5x + class weight 1.85 disrupted the delicate balance.
+
+---
+
+### 🎯 POLARIZATION ANALYSIS (3 Classes) - RUN #9
+
+| Class             | Precision | Recall | F1         | Support | Run #8 F1 | Change        | Status                  |
+| ----------------- | --------- | ------ | ---------- | ------- | --------- | ------------- | ----------------------- |
+| **Non-polarized** | 59.59%    | 66.44% | **62.83%** | 435     | 64.40%    | **-1.57%** 🔴 | 🔴 Slight regression    |
+| **Objective**     | 44.55%    | 50.00% | **47.12%** | 90      | 51.16%    | **-4.04%** 🔴 | 🔴 **MAJOR REGRESSION** |
+| **Partisan**      | 84.71%    | 79.38% | **81.96%** | 970     | 83.36%    | **-1.40%** 🔴 | 🔴 Slight regression    |
+
+**KEY FINDINGS:**
+
+1. **Non-polarized Regression (-1.57%):**
+
+   - Precision: 61.51% → 59.59% (-1.92%)
+   - Recall: 67.59% → 66.44% (-1.15%)
+   - **Root Cause:** Class weight 1.25→1.35 was too aggressive (overfitting)
+
+2. **Objective Collapse (-4.04%):**
+
+   - Precision: 53.66% → 44.55% (-9.11% 🚨)
+   - Recall: 48.89% → 50.00% (+1.11% ➡️)
+   - **CRITICAL:** Lost Run #8's breakthrough momentum!
+   - **Root Causes:**
+     - Increased boost (3.5x → 4.0x) caused overfitting on 90 samples
+     - Class weight increase (2.80 → 3.00) made it worse
+     - Oversampling samples increased but hurt generalization
+
+3. **Partisan Regression (-1.40%):**
+
+   - Precision: 84.92% → 84.71% (-0.21%)
+   - Recall: 81.86% → 79.38% (-2.48%)
+   - **Root Cause:** Focal gamma 3.3 still working but other changes created interference
+
+**Critical Insight:** Objective 3.5x was the sweet spot! Pushing to 4.0x overfitted the tiny 90-sample class.
+
+---
+
+### 🔥 ROOT CAUSE ANALYSIS - WHY RUN #9 FAILED
+
+#### **1. Oversampling Increase Backfired** 🚨
+
+**Changes:**
+
+- Objective: 3.5x → 4.0x (405 → 540 samples)
+- Neutral: 0.3x → 0.5x (227 → 378 samples expected, but actually 227 again!)
+
+**Wait... Neutral samples DIDN'T increase?!** 🤔
+
+Looking at the output:
+
+```
+🔥 Enhanced Oversampling: min=0.50, max=17.00
+   ├─ Objective boosted samples: 405 (target: weak class at 40% F1)
+   └─ Neutral boosted samples: 227 (target: weak class at 49% F1)
+```
+
+**CRITICAL BUG DISCOVERED:** Neutral boost from 0.3x → 0.5x should've increased samples to ~375, but stayed at 227!
+
+**Implications:**
+
+- Objective DID increase (405 samples) → overfitted → F1 -4.04%
+- Neutral DIDN'T increase (227 samples) → but class weight increased → precision collapse!
+- **Neutral class weight 1.70→1.85 WITHOUT more samples = catastrophic precision loss!**
+
+#### **2. Class Weight Cascade Failures** ⛓️
+
+**Changes Made:**
+
+- Sentiment neutral: 1.70 → 1.85
+- Polarization non-polarized: 1.25 → 1.35
+- Polarization objective: 2.80 → 3.00
+
+**What Happened:**
+
+1. **Neutral 1.85:** Without more samples, this just made the model overweight existing 227 samples
+
+   - Precision: 65.07% → 52.79% (-12.28%!)
+   - Stole capacity from negative class (recall: 88.15% → 71.90% -16.25%!)
+
+2. **Non-polarized 1.35:** Too aggressive for 435 samples
+
+   - Minor regression across the board
+
+3. **Objective 3.00:** Combined with 4.0x boost = double overfitting
+   - Precision: 53.66% → 44.55% (-9.11%!)
+
+#### **3. Training Instability Indicators** 📉
+
+**Epoch Analysis (from logs):**
+
+- Epoch 10: 64.82% macro-F1 (validation peak region)
+- Epoch 13: 63.97% macro-F1 (validation degrading)
+- Epoch 16: 64.54% macro-F1 (validation unstable)
+- **Test performance:** 67.32% (lower than Run #8's 69.12%)
+
+**Issue:** Training showed instability - kept oscillating instead of converging smoothly like Run #8.
+
+**Root Cause:** Too many simultaneous changes created optimization difficulty.
+
+---
+
+### 🔬 OVERSAMPLING BUG ANALYSIS
+
+**Expected vs Actual:**
+
+| Boost Mult | Expected Formula               | Expected Samples | Actual | Bug?       |
+| ---------- | ------------------------------ | ---------------- | ------ | ---------- |
+| 0.3x       | 401 × 0.3 × some_factor = ~227 | ~227             | 227    | ✅ Working |
+| 0.5x       | 401 × 0.5 × some_factor = ~335 | ~335-375         | 227    | 🚨 **BUG** |
+| 4.0x (obj) | 90 × 4.0 × some_factor = ~540  | ~540             | 405    | 🚨 **BUG** |
+
+**Hypothesis:** The oversampling logic might be capped or has a different calculation that we expected.
+
+**Evidence from oversampling stats:**
+
+- Max weight: 17.00 (expected ~17-19 ✅)
+- Objective: 405 samples (not 540!)
+- Neutral: 227 samples (not 375!)
+
+**Conclusion:** The boosting multipliers don't directly multiply samples - there's additional logic (likely joint oversampling cap at 6.0x) that limits the actual sampling.
+
+**Impact:**
+
+- We increased class weights WITHOUT corresponding sample increases
+- This caused models to overfit to existing samples
+- Result: Precision collapsed!
+
+---
+
+### 📊 COMPARISON: RUN #8 vs RUN #9
+
+**Configuration Differences:**
+
+| Parameter                         | Run #8 | Run #9 | Impact             |
+| --------------------------------- | ------ | ------ | ------------------ |
+| Sentiment neutral weight          | 1.70   | 1.85   | 🔴 Precision -12%  |
+| Polarization non-polarized weight | 1.25   | 1.35   | 🔴 F1 -1.6%        |
+| Polarization objective weight     | 2.80   | 3.00   | 🔴 Precision -9%   |
+| Objective boost                   | 3.5x   | 4.0x   | 🔴 Overfitted      |
+| Neutral boost                     | 0.3x   | 0.5x   | ➡️ No effect (bug) |
+
+**Performance Impact:**
+
+| Metric      | Run #8 | Run #9 | Change | Analysis                            |
+| ----------- | ------ | ------ | ------ | ----------------------------------- |
+| Overall F1  | 69.12% | 67.32% | -1.80% | 🔴 All changes backfired            |
+| Negative F1 | 83.48% | 77.73% | -5.75% | 🔴 Worst regression (neutral stole) |
+| Neutral F1  | 54.83% | 59.57% | +4.74% | ⚠️ Gained but at huge cost          |
+| Positive F1 | 77.46% | 74.71% | -2.75% | 🔴 Collateral damage                |
+| Non-pol F1  | 64.40% | 62.83% | -1.57% | 🔴 Overfitting                      |
+| Objective   | 51.16% | 47.12% | -4.04% | 🔴 Lost breakthrough!               |
+| Partisan F1 | 83.36% | 81.96% | -1.40% | 🔴 Slight regression                |
+
+**Critical Finding:** **ALL 6 CLASSES HAD NET NEGATIVE OR TRADE-OFF IMPACT!**
+
+---
+
+### 💡 KEY LESSONS FROM RUN #9
+
+#### **1. Run #8 Was Already Optimal** ✅
+
+- Negative 83.48%, Positive 77.46%, Partisan 83.36% were at or near peak
+- Neutral 0.3x (227 samples) was the perfect balance
+- Objective 3.5x was the sweet spot for 90 samples
+- **Lesson:** When you find a breakthrough configuration, don't push it harder!
+
+#### **2. Class Weight Increases Need Sample Support** 📚
+
+- Increasing neutral weight from 1.70 → 1.85 WITHOUT more samples = disaster
+- Model just overfitted to the same 227 samples
+- Result: Precision collapsed 65.07% → 52.79% (-12.28%!)
+- **Lesson:** Class weights and oversampling must scale together!
+
+#### **3. Small Classes Have Hard Limits** 🚧
+
+- Objective (90 samples): 3.5x works, 4.0x overfits
+- Neutral (401 samples): 0.3x optimal, 0.5x too much (even if it worked)
+- **Lesson:** Tiny classes have sweet spots - overshooting causes precision collapse!
+
+#### **4. Configuration Interactions Are Non-Linear** 🔀
+
+- Changing 5 parameters simultaneously created unforeseen interactions
+- Neutral weight increase stole negative's capacity
+- Objective weight + boost double-overfitted
+- **Lesson:** ONE CHANGE AT A TIME when near optimal config!
+
+#### **5. Oversampling Logic Needs Understanding** 🔍
+
+- BOOST_MULT doesn't directly multiply samples (has caps/limits)
+- Joint oversampling max (6.0x) acts as a ceiling
+- **Lesson:** Need to validate actual sample counts match expectations!
+
+---
+
+### 🎯 RECOMMENDED NEXT STEPS FOR RUN #10
+
+#### **Strategy: REVERT TO RUN #8 + SURGICAL FIX**
+
+**Primary Goal:** Recover Run #8's 69.12% F1, then make ONE targeted change.
+
+**Configuration Changes:**
+
+```python
+# ============================================================================
+# RUN #10: BACK TO RUN #8 BASELINE + MINIMAL NEUTRAL TWEAK
+# ============================================================================
+
+# ✅ REVERT ALL RUN #9 CHANGES
+CLASS_WEIGHT_MULT = {
+    "sentiment": {
+        "negative": 1.05,    # ✅ REVERT (1.85 → 1.05) - Keep Run #8!
+        "neutral":  1.70,    # ✅ REVERT (1.85 → 1.70) - Run #8 optimal!
+        "positive": 1.35     # ✅ KEEP (stable)
+    },
+    "polarization": {
+        "non_polarized": 1.25,  # ✅ REVERT (1.35 → 1.25)
+        "objective":     2.80,  # ✅ REVERT (3.00 → 2.80)
+        "partisan":      0.90   # ✅ KEEP
+    }
+}
+
+OBJECTIVE_BOOST_MULT = 3.5   # ✅ REVERT (4.0 → 3.5) - Sweet spot!
+NEUTRAL_BOOST_MULT = 0.3     # ✅ KEEP (0.3) - Optimal!
+
+# Keep all other Run #8 parameters:
+EPOCHS = 20
+LR = 3.0e-5
+NUM_CYCLES = 0.5
+EARLY_STOP_PATIENCE = 6
+FOCAL_GAMMA_SENTIMENT = 2.5
+FOCAL_GAMMA_POLARITY = 3.3
+LABEL_SMOOTH_SENTIMENT = 0.10
+LABEL_SMOOTH_POLARITY = 0.08
+```
+
+**Expected Result:** 68.5-69.5% macro-F1 (full recovery to Run #8 range)
+
+#### **Alternative: If You Want to Push Neutral (Risky)**
+
+**Option A - Neutral Only (0.3x → 0.35x):**
+
+- Increase NEUTRAL_BOOST_MULT to 0.35x (target ~250 samples)
+- Keep EVERYTHING else from Run #8
+- Risk: Low
+- Expected: 69-70% F1
+
+**Option B - Neutral Weight Only (1.70 → 1.75):**
+
+- Increase neutral class weight to 1.75 (slight bump)
+- Keep EVERYTHING else from Run #8 including 0.3x boost
+- Risk: Medium (recall Run #9's precision collapse)
+- Expected: 69-70% F1
+
+---
+
+### 🏆 PROGRESS TO 75% TARGET
+
+**Current Status:**
+
+- **Run #8 Peak**: 69.12%
+- **Run #9 Result**: 67.32%
+- **Best So Far**: 69.12% (Run #8)
+- **Gap to Target**: -5.88%
+
+**Trajectory Analysis:**
+
+| Stage         | Macro-F1   | Progress   |
+| ------------- | ---------- | ---------- |
+| Run #1        | 61.16%     | Baseline   |
+| Run #2        | 63.70%     | +2.54%     |
+| Run #3        | 66.34%     | +2.64%     |
+| Run #5 (peak) | 67.20%     | +0.86%     |
+| Run #8 (peak) | 69.12%     | +1.92%     |
+| **Run #9**    | **67.32%** | **-1.80%** |
+
+**Analysis:**
+
+- Lost momentum from Run #8 breakthrough
+- Need to recover to 69% before pushing higher
+- **New ETA:** Run #11-12 to hit 75% (if we recover momentum)
+
+**Recommended Path Forward:**
+
+1. **Run #10:** Recover to 69% (full Run #8 revert)
+2. **Run #11:** ONE small change (either neutral boost 0.35x OR weight 1.75)
+3. **Run #12:** Objective data augmentation or head architecture change
+4. **Target:** 75% by Run #13-14
+
+---
+
+### 🔍 TRAINING DYNAMICS - RUN #9
+
+**Validation Performance Across Epochs:**
+
+| Epoch | Val Loss | Sent F1 | Pol F1 | Macro F1 | Notes                    |
+| ----- | -------- | ------- | ------ | -------- | ------------------------ |
+| 1     | 0.8667   | 46.76%  | 28.23% | 37.49%   | Starting to learn        |
+| 4     | 0.3325   | 59.77%  | 56.24% | 58.01%   | Rapid improvement        |
+| 7     | 0.1598   | 63.26%  | 56.63% | 59.94%   | Slower gains             |
+| 10    | 0.1139   | 67.91%  | 61.73% | 64.82%   | **Best validation zone** |
+| 13    | 0.1024   | 68.48%  | 59.46% | 63.97%   | Validation degrading 🔴  |
+| 16    | 0.0759   | 68.74%  | 60.35% | 64.54%   | Still unstable           |
+
+**Critical Observations:**
+
+1. **Peak vs Final Performance:**
+
+   - Validation peaked around epoch 10-13
+   - Final test performance (67.32%) lower than Run #8 (69.12%)
+   - **Issue:** Model didn't converge as well as Run #8
+
+2. **Loss Pattern:**
+
+   - Training loss kept dropping: 1.23 → 0.08 (good)
+   - Validation loss: 0.87 → 0.08 (seems good but...)
+   - **Issue:** Low loss didn't translate to high F1!
+
+3. **Compared to Run #8:**
+   - Run #8 had smoother convergence
+   - Run #8 validation F1 peaked and stabilized
+   - Run #9 showed more oscillation
+
+**Hypothesis:** Too many configuration changes created optimization difficulty.
+
+---
+
+### 🧪 HYPOTHESIS: WHY NEUTRAL SAMPLES DIDN'T INCREASE
+
+**Expected Calculation:**
+
+```python
+NEUTRAL_BOOST_MULT = 0.5
+neutral_samples = 401 (base)
+expected_boost = 401 * 0.5 * adjustment_factor
+```
+
+**Possible Explanations:**
+
+1. **Joint Oversampling Cap:**
+
+   - `JOINT_OVERSAMPLING_MAX_MULT = 6.0`
+   - This might be a GLOBAL cap across all classes
+   - Once total oversampling weight hits 6.0x, no more boosting allowed
+   - **Evidence:** Max weight = 17.00 (same ballpark as Run #8's 14.88)
+
+2. **Smart Oversampling Logic:**
+
+   - `USE_SMART_OVERSAMPLING = True`
+   - This might have internal heuristics that prevent over-boosting
+   - Could be looking at validation performance and auto-limiting
+
+3. **NEUTRAL_BOOST_MULT Threshold:**
+   - Maybe the threshold for neutral boosting is > 0.5x to trigger
+   - Below 0.5x might be treated as "minimal" and capped
+
+**Action Required:**
+
+- Check the actual oversampling implementation in training loop
+- Verify the calculation for how BOOST_MULT translates to samples
+- Consider logging actual sample counts during training
+
+---
+
+### 📈 OVERSAMPLING WEIGHT ANALYSIS
+
+**Run #9 vs Run #8:**
+
+| Metric            | Run #8 | Run #9 | Analysis                       |
+| ----------------- | ------ | ------ | ------------------------------ |
+| Max weight        | 14.88  | 17.00  | ⬆️ Increased (expected ~17-19) |
+| Objective samples | 405    | 405    | ➡️ Same (expected ~540!)       |
+| Neutral samples   | 227    | 227    | ➡️ Same (expected ~375!)       |
+| Objective F1      | 51.16% | 47.12% | 🔴 Worse despite same samples  |
+| Neutral F1        | 54.83% | 59.57% | ✅ Better despite same samples |
+
+**Critical Discovery:**
+
+- Objective and Neutral kept SAME sample counts
+- But performance changed significantly!
+- **Conclusion:** Class weight changes (not sample increases) drove the performance changes!
+
+**Implication:**
+
+- Run #9's changes were ONLY class weight increases
+- No actual sample increases happened
+- This explains the precision collapse - more weight on same data = overfitting!
+
+---
+
+### 🎓 FINAL VERDICT
+
+**Run #9 Status:** 🔴 **COMPLETE FAILURE - OVERREACH**
+
+**What Worked:**
+
+- Nothing! All changes backfired or had net negative impact
+
+**What Didn't Work:**
+
+1. ❌ Increasing 5 parameters simultaneously
+2. ❌ Class weight increases without sample support
+3. ❌ Pushing objective boost beyond 3.5x sweet spot
+4. ❌ Disrupting Run #8's delicate balance
+
+**Critical Lesson:**
+
+> **"Perfect is the enemy of good"** - Run #8 was near-optimal. Trying to squeeze more performance by changing multiple things broke the careful balance.
+
+**Recovery Plan:**
+
+1. **Full revert to Run #8 configuration**
+2. **Validate recovery (target: 68.5-69.5% F1)**
+3. **ONE surgical change only in Run #11**
+4. **Continue with single-variable experiments**
+
+**Path to 75%:**
+
+- Current best: 69.12% (Run #8)
+- Remaining gap: 5.88%
+- Strategy: Small, validated improvements
+- ETA: Run #12-14 (if we stay disciplined!)
+
+---
+
+**Last Updated:** After Run #9 completion  
+**Next Update:** After Run #10 recovery run
