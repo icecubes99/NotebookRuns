@@ -1,106 +1,108 @@
 🚀 Starting SECTION 10: Model Training Execution...
 
-=== Running xlm_roberta -> xlm-roberta-base ===
-🔥 Enhanced Oversampling: min=0.50, max=17.00
+=== Running mbert -> bert-base-multilingual-cased ===
+🔥 Enhanced Oversampling: min=1.00, max=68.28
    ├─ Objective boosted samples: 405 (target: weak class at 40% F1)
-   └─ Neutral boosted samples: 227 (target: weak class at 49% F1)
- [2470/2900 1:49:32 < 19:05, 0.38 it/s, Epoch 16/20]
+   └─ Neutral boosted samples: 1874 (target: weak class at 49% F1)
+ [2900/2900 1:09:56, Epoch 19/20]
 Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	Pol Prec	Pol Rec	Pol F1	Macro F1 Avg
-0	1.229500	No log	0.268227	0.458005	0.421361	0.256676	0.073579	0.162973	0.347716	0.066165	0.161421
-1	0.866700	No log	0.486957	0.501050	0.565578	0.467626	0.272241	0.465253	0.478650	0.282268	0.374947
-3	0.460100	No log	0.547826	0.556985	0.633598	0.540613	0.468227	0.495441	0.612899	0.436674	0.488644
-4	0.332500	No log	0.634114	0.587884	0.661280	0.597699	0.650167	0.548955	0.673534	0.562414	0.580057
-6	0.227200	No log	0.704348	0.676656	0.675039	0.675804	0.700334	0.590446	0.656778	0.610999	0.643401
-7	0.159800	No log	0.622074	0.636388	0.683433	0.632581	0.635452	0.562021	0.631593	0.566260	0.599420
-9	0.139200	No log	0.680268	0.675314	0.694265	0.678490	0.680936	0.576609	0.635235	0.587967	0.633229
-10	0.113900	No log	0.688963	0.671982	0.694502	0.679062	0.748495	0.609784	0.626792	0.617258	0.648160
-12	0.095300	No log	0.694983	0.671284	0.683189	0.676499	0.706355	0.590593	0.598644	0.585711	0.631105
-13	0.102400	No log	0.693645	0.675856	0.703102	0.684773	0.733110	0.620597	0.596473	0.594619	0.639696
-15	0.075600	No log	0.691639	0.675274	0.694523	0.681889	0.725753	0.607511	0.600212	0.590909	0.636399
-16	0.075900	No log	0.705017	0.683633	0.692332	0.687386	0.748495	0.620205	0.603210	0.603488	0.645437
-✅ SECTION 10: Model Training Execution completed in 1.8h 50m
-🕒 Total runtime so far: 6.4h 26m
+0	0.969300	No log	0.290301	0.292898	0.395799	0.250409	0.062207	0.020736	0.333333	0.039043	0.144726
+1	0.710200	No log	0.411371	0.629624	0.527647	0.438483	0.127090	0.514514	0.376232	0.121295	0.279889
+3	0.319100	No log	0.438127	0.594566	0.546352	0.458398	0.333779	0.490500	0.558507	0.321603	0.390001
+4	0.214500	No log	0.527759	0.658857	0.566103	0.548146	0.507692	0.515384	0.621873	0.481161	0.514653
+6	0.162200	No log	0.446154	0.658269	0.576172	0.488032	0.648829	0.556537	0.624000	0.564950	0.526491
+7	0.136100	No log	0.529097	0.617152	0.629183	0.558428	0.592642	0.551954	0.578278	0.524904	0.541666
+9	0.112800	No log	0.503010	0.659670	0.607120	0.540867	0.634114	0.558533	0.574814	0.536330	0.538598
+10	0.110800	No log	0.493645	0.583895	0.633879	0.511696	0.680936	0.577974	0.579248	0.563235	0.537465
+12	0.079000	No log	0.609365	0.632713	0.658883	0.622734	0.703010	0.568739	0.605367	0.580283	0.601509
+13	0.073600	No log	0.577926	0.634636	0.660507	0.604148	0.650836	0.576140	0.579312	0.549236	0.576692
+15	0.073400	No log	0.569231	0.623668	0.661583	0.592306	0.622742	0.564593	0.564231	0.528330	0.560318
+16	0.071500	No log	0.575251	0.644953	0.660735	0.603045	0.595987	0.571767	0.554288	0.510727	0.556886
+18	0.086800	No log	0.593311	0.652943	0.663771	0.620535	0.692977	0.600369	0.583170	0.569474	0.595004
+19	0.069800	No log	0.584615	0.653479	0.663160	0.616182	0.688294	0.594060	0.580855	0.565373	0.590778
+✅ SECTION 10: Model Training Execution completed in 1.2h 10m
+🕒 Total runtime so far: 9.3h 20m
 ------------------------------------------------------------
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	xlm_roberta	xlm-roberta-base	0.717057	0.69862	0.725431	0.706685	0.738462	0.629502	0.652727	0.639683	0.673184	5.7617	259.473	16.315
+0	mbert	bert-base-multilingual-cased	0.610702	0.637009	0.661538	0.625369	0.703679	0.592552	0.628624	0.60429	0.614829	4.5974	325.186	20.446
 
-=== Detailed breakdowns for xlm_roberta ===
+=== Detailed breakdowns for mbert ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.845950	0.718962	0.777303	886
-1	neutral	0.527938	0.683292	0.595652	401
-2	positive	0.721973	0.774038	0.747100	208
+0	negative	0.813149	0.530474	0.642077	886
+1	neutral	0.420749	0.728180	0.533333	401
+2	positive	0.677130	0.725962	0.700696	208
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.595876	0.664368	0.628261	435
-1	objective	0.445545	0.500000	0.471204	90
-2	partisan	0.847085	0.793814	0.819585	970
+0	non_polarized	0.556738	0.721839	0.628629	435
+1	objective	0.373832	0.444444	0.406091	90
+2	partisan	0.847087	0.719588	0.778149	970
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan
-0	negative	886	0.787810	0.582201	0.568306	0.310345	0.867953
-1	neutral	401	0.645885	0.630277	0.668342	0.584906	0.637584
-2	positive	208	0.706731	0.603190	0.666667	0.370370	0.772532
+0	negative	886	0.749436	0.546646	0.552764	0.250000	0.837174
+1	neutral	401	0.635910	0.599406	0.697674	0.520833	0.579710
+2	positive	208	0.639423	0.573766	0.631579	0.413793	0.675926
 
 Sentiment performance within each Polarity slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_negative	f1_neutral	f1_positive
-0	partisan	970	0.739175	0.664933	0.825324	0.411111	0.758364
-1	non_polarized	435	0.666667	0.677652	0.578571	0.691796	0.762590
-2	objective	90	0.722222	0.651360	0.625000	0.807339	0.521739
+0	partisan	970	0.611340	0.579641	0.703578	0.346939	0.688406
+1	non_polarized	435	0.604598	0.598440	0.360515	0.677228	0.757576
+2	objective	90	0.633333	0.589352	0.526316	0.720000	0.521739
 
-Saved detailed breakdowns to: ./runs_xlm_roberta_optimized/details
+Saved detailed breakdowns to: ./runs_mbert_optimized/details
 
 🎯 MULTICLASS CALIBRATION - Optimize prediction biases for better performance
 ======================================================================
 
-🔧 Calibrating xlm_roberta (xlm-roberta-base)...
+🔧 Calibrating mbert (bert-base-multilingual-cased)...
 📊 Step 1: Extracting polarization logits from trained model...
-   Loading model from: ./runs_xlm_roberta_optimized/xlm_roberta
-   Warning: No trained weights found at ./runs_xlm_roberta_optimized/xlm_roberta/pytorch_model.bin, using untrained model
-   Loading model from: ./runs_xlm_roberta_optimized/xlm_roberta
-   Warning: No trained weights found at ./runs_xlm_roberta_optimized/xlm_roberta/pytorch_model.bin, using untrained model
+   Loading model from: ./runs_mbert_optimized/mbert
+   ✓ Loading weights from: ./runs_mbert_optimized/mbert/model.safetensors
+   Loading model from: ./runs_mbert_optimized/mbert
+   ✓ Loading weights from: ./runs_mbert_optimized/mbert/model.safetensors
    ✓ Validation logits shape: (1495, 3)
    ✓ Test logits shape: (1495, 3)
 🔍 Step 2: Searching for optimal bias vector (coordinate search)...
-   ✓ Optimal bias vector found (VAL macro-F1=0.357):
-      • non_polarized: +0.60
-      •     objective: +0.00
-      •      partisan: +0.80
+   ✓ Optimal bias vector found (VAL macro-F1=0.599):
+      • non_polarized: -0.20
+      •     objective: +0.70
+      •      partisan: +0.00
 📈 Step 3: Evaluating calibration impact on test set...
 
-   📊 TEST MACRO-F1: 0.150 → 0.150 (+0.000)
+   📊 TEST MACRO-F1: 0.604 → 0.615 (+0.011)
 
    Per-class breakdown:
-   ➡️ non_polarized: P=0.291 R=1.000 F1=0.451 (n=435)  →  P=0.291 R=1.000 F1=0.451 (+0.000)
-   ➡️     objective: P=0.000 R=0.000 F1=0.000 (n=90)  →  P=0.000 R=0.000 F1=0.000 (+0.000)
-   ➡️      partisan: P=0.000 R=0.000 F1=0.000 (n=970)  →  P=0.000 R=0.000 F1=0.000 (+0.000)
+   📉 non_polarized: P=0.557 R=0.722 F1=0.629 (n=435)  →  P=0.667 R=0.584 F1=0.623 (-0.006)
+   📉     objective: P=0.374 R=0.444 F1=0.406 (n=90)  →  P=0.353 R=0.467 F1=0.402 (-0.004)
+   📈      partisan: P=0.847 R=0.720 F1=0.778 (n=970)  →  P=0.810 R=0.831 F1=0.820 (+0.042)
 
 ✅ Calibration complete! Bias vector saved to:
-   ./runs_xlm_roberta_optimized/calibration_vector/xlm_roberta_bias_vector.json
+   ./runs_mbert_optimized/calibration_vector/mbert_bias_vector.json
 
 ======================================================================
 🎉 CALIBRATION FINISHED - All models optimized!
 
-[xlm_roberta] xlm-roberta-base
-Token indices sequence length is longer than the specified maximum sequence length for this model (950 > 512). Running this sequence through the model will result in indexing errors
-Token length stats: {'mean': 106.9514, 'p50': 96.0, 'p90': 170.0, 'p95': 182.0, 'p99': 215.0, 'max': 950}
-✅ SECTION 11+: Evaluation & Calibration completed in 19.3s
-🕒 Total runtime so far: 6.4h 27m
+[mbert] bert-base-multilingual-cased
+Token indices sequence length is longer than the specified maximum sequence length for this model (916 > 512). Running this sequence through the model will result in indexing errors
+Token length stats: {'mean': 109.174, 'p50': 97.0, 'p90': 179.0, 'p95': 194.0, 'p99': 226.02000000000044, 'max': 916}
+✅ SECTION 11+: Evaluation & Calibration completed in 44.8s
+🕒 Total runtime so far: 9.3h 20m
 ------------------------------------------------------------
 
 ============================================================
 ⏱️  EXECUTION TIME SUMMARY
 ============================================================
-SECTION 2: Environment & Imports         : 16.0s
-SECTION 3: Configuration Setup           : 9.8m 51s
-SECTION 4: Data Loading & Preprocessing  : 0.1s
-SECTION 5-9: Model Architecture & Training Setup : 4.1s
-SECTION 10: Model Training Execution     : 1.8h 50m
-SECTION 11+: Evaluation & Calibration    : 19.3s
+SECTION 2: Environment & Imports         : 9.2s
+SECTION 3: Configuration Setup           : 5.3m 18s
+SECTION 4: Data Loading & Preprocessing  : 1.2m 11s
+SECTION 5-9: Model Architecture & Training Setup : 5.3s
+SECTION 10: Model Training Execution     : 1.2h 10m
+SECTION 11+: Evaluation & Calibration    : 44.8s
 ======================================== : ==========
-TOTAL EXECUTION TIME                     : 6.4h 27m
+TOTAL EXECUTION TIME                     : 9.3h 20m
 ============================================================
