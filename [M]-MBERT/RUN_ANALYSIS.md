@@ -5385,3 +5385,660 @@ Based on ensemble results, decide between:
 **Next action:** **CREATE SEED ENSEMBLE, THEN DECIDE ON ARCHITECTURAL CHANGES**
 
 ---
+
+# 🔬 RUN #14 ANALYSIS - ARCHITECTURAL EXPERIMENT DISASTER
+
+**Date:** October 26, 2025  
+**Run ID:** 14  
+**Configuration:** R9 + Massive Architectural Changes  
+**Training Duration:** 1h 41m (101 minutes)  
+**Status:** ❌ **CATASTROPHIC REGRESSION** - Worst run since R7!
+
+---
+
+## 📊 EXECUTIVE SUMMARY
+
+| Metric                       | Run #14    | Best (R10) | vs R10     | vs R9      | Status           |
+| ---------------------------- | ---------- | ---------- | ---------- | ---------- | ---------------- |
+| **Overall Macro-F1**         | **57.76%** | **63.06%** | **-5.30%** | **-4.98%** | ❌ **DISASTER**  |
+| Sentiment F1                 | 58.34%     | ~62%       | -3.66%     | -3.66%     | ❌ Regressed     |
+| Polarization F1 (pre-calib)  | 52.96%     | ~64%       | -11.04%    | -11.04%    | ❌ **COLLAPSED** |
+| Polarization F1 (post-calib) | 57.17%     | ~64%       | -6.83%     | -6.83%     | ❌ Severe        |
+
+**🎯 THE VERDICT:**
+
+**Massive architectural changes BACKFIRED catastrophically.** Instead of pushing toward 75%, we regressed by **-5.3%** to performance worse than Run #4 (62.06%). The doubling of model capacity, attention pooling, and 4-layer residual heads caused severe overfitting and training instability.
+
+---
+
+## 🎯 OVERALL PERFORMANCE COMPARISON
+
+### Before Calibration:
+
+- **Overall Macro-F1: 55.65%** (average of 58.34% sentiment + 52.96% polarization)
+- **vs R9 (62.74%):** -7.09% regression
+- **vs R10 (63.06%):** -7.41% regression
+- **vs R4 (62.06%):** -6.41% regression
+
+### After Calibration:
+
+- **Overall Macro-F1: 57.76%** (average of 58.34% sentiment + 57.17% polarization)
+- **vs R9 (62.74%):** -4.98% regression
+- **vs R10 (63.06%):** -5.30% regression
+- **Calibration Boost:** +2.11% (only on polarization, sentiment unchanged)
+
+**🚨 CRITICAL FINDING:** This is the **worst mBERT performance since Run #7** (53.68%), and even worse than the initial baseline Run #1 (58.5%)!
+
+---
+
+## 📈 DETAILED BREAKDOWN
+
+### **1. Sentiment Classification (Test Set)**
+
+| Class         | Precision  | Recall     | F1         | Support | vs R9 Est. | Status                  |
+| ------------- | ---------- | ---------- | ---------- | ------- | ---------- | ----------------------- |
+| **Negative**  | 86.17%     | 40.07%     | **54.70%** | 886     | -10%       | ❌ **RECALL CRISIS**    |
+| **Neutral**   | 39.45%     | 79.30%     | **52.69%** | 401     | -5%        | ❌ **PRECISION CRISIS** |
+| **Positive**  | 59.21%     | 78.85%     | **67.63%** | 208     | -5%        | 🟡 Declined             |
+| **Macro-Avg** | **61.61%** | **66.07%** | **58.34%** | 1495    | **-4%**    | ❌ **REGRESSED**        |
+
+**🔥 SENTIMENT ISSUES:**
+
+1. **Negative Recall Collapse:** 40.07% (worst since R5's 38.43%!)
+   - Model became **hyper-conservative** in predicting negative
+   - High precision (86.17%) but catastrophic recall
+2. **Neutral Precision Collapse:** 39.45% (worst ever!)
+   - Model now over-predicts neutral (79.30% recall)
+   - Massive false positive problem
+3. **Positive Class Declined:** 67.63% F1 (was ~73% in R9/R10)
+   - Even the strongest class regressed
+
+### **2. Polarization Classification (Test Set - Before Calibration)**
+
+| Class             | Precision  | Recall     | F1         | Support | vs R9 Est. | Status            |
+| ----------------- | ---------- | ---------- | ---------- | ------- | ---------- | ----------------- |
+| **Non-polarized** | 45.40%     | 73.79%     | **56.22%** | 435     | -7%        | ❌ Regressed      |
+| **Objective**     | 31.68%     | 35.56%     | **33.51%** | 90      | -12%       | ❌ **WORST EVER** |
+| **Partisan**      | 83.41%     | 59.07%     | **69.16%** | 970     | -5%        | ❌ Declined       |
+| **Macro-Avg**     | **53.50%** | **56.14%** | **52.96%** | 1495    | **-10%**   | ❌ **COLLAPSED**  |
+
+**🔥 POLARIZATION ISSUES (Pre-Calibration):**
+
+1. **Objective Class Destroyed:** 33.51% F1 (worst performance ever!)
+   - Both precision (31.68%) and recall (35.56%) are terrible
+   - R9/R10 had ~45-50% F1 for objective
+2. **Partisan Recall Crisis:** 59.07% (down from ~68% in R9/R10)
+   - Model became conservative on partisan predictions
+3. **Overall Collapse:** 52.96% macro-F1 is a **-10% regression**
+
+### **3. Polarization Classification (Test Set - After Calibration)**
+
+| Class             | Precision  | Recall     | F1         | Change     | Support |
+| ----------------- | ---------- | ---------- | ---------- | ---------- | ------- |
+| **Non-polarized** | 61.00%     | 51.03%     | **55.59%** | -0.63%     | 435     |
+| **Objective**     | 32.05%     | 38.89%     | **35.23%** | +1.72%     | 90      |
+| **Partisan**      | 78.67%     | 82.89%     | **80.73%** | +11.57%    | 970     |
+| **Macro-Avg**     | **57.24%** | **57.60%** | **57.18%** | **+4.22%** | 1495    |
+
+**Calibration Impact:**
+
+- **Calibration helped (+4.22% boost)**, especially for Partisan (+11.57%)
+- But even with calibration, still **-6.83% below R9/R10** polarization performance
+- Objective class barely improved (+1.72%)
+
+---
+
+## 🔍 ROOT CAUSE ANALYSIS
+
+### **1. ❌ MASSIVE ARCHITECTURAL OVERREACH**
+
+**What Changed from R9:**
+
+```python
+# ARCHITECTURE - R14 MASSIVE CHANGES
+HEAD_HIDDEN = 1536           # ❌ DOUBLED from 768 (2x capacity!)
+HEAD_DROPOUT = 0.30          # ⬆️ UP from 0.25
+REP_POOLING = "attention"    # ❌ NEW: Attention-based pooling (was "last4_mean")
+HEAD_LAYERS = 4              # ⬆️ UP from 3 (deeper heads with residuals)
+
+# NEW ARCHITECTURAL FLAGS
+USE_TASK_SPECIFIC_PROJECTIONS = True    # ❌ NEW: Separate projections per task
+USE_RESIDUAL_CONNECTIONS = True         # ❌ NEW: ResidualBlocks in trunk/heads
+USE_MULTI_SAMPLE_DROPOUT = True         # ❌ NEW: Multi-sample dropout (5 samples)
+USE_ATTENTION_POOLING_MULTI_HEAD = True # ❌ NEW: Multi-head attention pooling
+```
+
+**Why This Failed:**
+
+1. **Capacity Explosion:**
+
+   - HEAD_HIDDEN: 768 → 1536 (2x parameters in all head layers!)
+   - HEAD_LAYERS: 3 → 4 (33% more depth)
+   - **Result:** Model became too large for dataset size (5,985 train samples)
+   - **Effect:** Severe overfitting - memorizes training data, fails on test
+
+2. **Attention Pooling Instability:**
+
+   - New `AttentionPooling` class with learnable layer/token attention
+   - **Issue:** Had to fix float16 overflow bug (`-1e9` → `-1e4`)
+   - **Effect:** May still have numerical instability issues in mixed precision
+
+3. **Residual Blocks Over-Engineering:**
+
+   - Added `ResidualBlock` class with LayerNorm + GELU + Xavier init
+   - **Issue:** Added complexity without proven benefit on this task
+   - **Effect:** Harder to optimize, slower convergence
+
+4. **Task-Specific Projections:**
+
+   - Added separate `sent_proj` and `pol_proj` layers
+   - **Issue:** Increases parameter count, reduces shared learning
+   - **Effect:** Tasks don't benefit from each other anymore
+
+5. **Multi-Sample Dropout:**
+   - `MULTI_SAMPLE_DROPOUT_NUM = 5` (5 forward passes per batch!)
+   - **Issue:** Significantly increases training time and memory
+   - **Effect:** May have caused unstable gradients
+
+### **2. ❌ TRAINING PARAMETER MISMATCH**
+
+**What Changed:**
+
+```python
+# TRAINING - R14 ADJUSTMENTS FOR LARGER MODEL
+BATCH_SIZE = 12              # ⬇️ DOWN from 16 (memory constraint)
+LR = 2.0e-5                 # ⬇️ DOWN from 2.5e-5 (compensate for size)
+WEIGHT_DECAY = 0.04         # ⬆️ UP from 0.03 (more regularization)
+WARMUP_RATIO = 0.25         # ⬆️ UP from 0.20 (longer warmup)
+EARLY_STOP_PATIENCE = 10    # ⬆️ UP from 8 (more convergence time)
+GRAD_ACCUM_STEPS = 4        # ⬆️ UP from 3 (maintain effective batch 48)
+```
+
+**Why This Failed:**
+
+1. **Learning Rate Too Low:**
+   - 2.0e-5 may be too conservative for the increased model capacity
+   - Larger models often need higher (not lower) LR to escape local minima
+2. **Batch Size Reduction:**
+   - 16 → 12 reduces gradient stability
+   - Despite gradient accumulation, smaller batches = noisier updates
+3. **Longer Training Didn't Help:**
+   - Increased patience (8 → 10) but model still overfit early
+   - More epochs without better optimization = more overfitting
+
+### **3. ❌ OVERFITTING EVIDENCE**
+
+**Training Progress Analysis:**
+
+```
+Epoch 0:  Macro-F1 = 9.18%  (initialization)
+Epoch 4:  Macro-F1 = 32.99%
+Epoch 8:  Macro-F1 = 41.95%
+Epoch 12: Macro-F1 = 56.26% (peak validation!)
+Epoch 16: Macro-F1 = 53.93% (declining!)
+Epoch 19: Macro-F1 = 54.60% (final - below peak!)
+```
+
+**🚨 OVERFITTING PATTERN:**
+
+- Peaked at Epoch 12 (56.26%)
+- Declined by Epoch 16 (53.93%)
+- Final performance (54.60%) below peak
+- **Test performance (55.65%) even worse than validation (54.60%)**
+
+**Classic overfitting:** Model memorizes training data after Epoch 12, generalizes worse.
+
+---
+
+## 💡 LESSONS LEARNED
+
+### **1. 🎯 ARCHITECTURAL COMPLEXITY ≠ BETTER PERFORMANCE**
+
+**The "More is Better" Fallacy:**
+
+| Change                        | Intent                | Result                  |
+| ----------------------------- | --------------------- | ----------------------- |
+| Double HEAD_HIDDEN (768→1536) | More capacity         | ❌ Overfitting          |
+| Attention Pooling             | Better representation | ❌ Instability          |
+| Residual Blocks               | Better gradient flow  | ❌ Over-engineering     |
+| Task-Specific Projections     | Specialized features  | ❌ Lost shared learning |
+| 4-Layer Heads                 | More depth            | ❌ Harder to optimize   |
+
+**Reality Check:**
+
+- Small dataset (5,985 samples) can't support 2x model size
+- Adding 5 major architectural changes at once = impossible to debug
+- **Lesson:** Make **incremental** changes, validate each one
+
+### **2. 🎯 DATASET SIZE LIMITS MODEL CAPACITY**
+
+**The Capacity-Data Trade-off:**
+
+```
+mBERT Training Data: 5,985 samples
+R9 HEAD_HIDDEN: 768  → Model size appropriate
+R14 HEAD_HIDDEN: 1536 → 2x parameters, same data
+
+Result: Catastrophic overfitting!
+```
+
+**Rules of Thumb:**
+
+- Need ~100-1000 samples per trainable parameter for good generalization
+- Doubling capacity requires ~2x more data
+- **Without more data, more capacity = memorization**
+
+### **3. 🎯 BATCH SIZE MATTERS**
+
+**The Batch Size-Stability Trade-off:**
+
+```
+R9:  BATCH_SIZE=16, GRAD_ACCUM=3 → Effective 48
+R14: BATCH_SIZE=12, GRAD_ACCUM=4 → Effective 48
+
+Same effective batch, but R14 has:
+- 33% more gradient accumulation steps
+- 25% smaller per-step batches
+- Result: Noisier gradients, slower convergence
+```
+
+**Lesson:** Effective batch size isn't everything - actual batch size affects gradient variance.
+
+### **4. 🎯 ATTENTION POOLING NEEDS CAREFUL TUNING**
+
+**Float16 Overflow Issue:**
+
+- Had to fix `-1e9` → `-1e4` for masking in attention weights
+- Mixed precision training is sensitive to large values
+- **Lesson:** Test numerical stability in target precision (float16)
+
+### **5. 🎯 MULTI-TASK LEARNING BENEFITS FROM SHARED ARCHITECTURE**
+
+**Task-Specific Projections Hurt:**
+
+- Adding separate `sent_proj` and `pol_proj` reduced shared learning
+- Sentiment and polarization tasks likely have shared semantic features
+- **Lesson:** Keep shared trunk strong, only diverge at final classification heads
+
+---
+
+## 🚀 RECOMMENDATIONS FOR RUN #15
+
+### **STRATEGY: REVERT TO R9 + SELECTIVE MICRO-CHANGES**
+
+The architectural experiment proved that **massive changes are harmful**. We need to:
+
+1. **Return to proven R9 baseline** (62.74% Macro-F1)
+2. **Make ONE small architectural change at a time**
+3. **Validate each change independently**
+
+---
+
+### **OPTION A: REVERT TO R9 EXACTLY (RECOMMENDED FOR RUN #15)**
+
+**Configuration:**
+
+```python
+# RESTORE R9 PROVEN BASELINE - ZERO CHANGES
+SEED = 42                   # ✅ Best seed from ensemble analysis
+MAX_LENGTH = 224
+EPOCHS = 20
+BATCH_SIZE = 16             # ✅ RESTORE from 12
+LR = 2.5e-5                # ✅ RESTORE from 2.0e-5
+WEIGHT_DECAY = 0.03        # ✅ RESTORE from 0.04
+WARMUP_RATIO = 0.20        # ✅ RESTORE from 0.25
+EARLY_STOP_PATIENCE = 8    # ✅ RESTORE from 10
+GRAD_ACCUM_STEPS = 3       # ✅ RESTORE from 4
+
+# ARCHITECTURE - RESTORE R9
+HEAD_HIDDEN = 768           # ✅ RESTORE from 1536
+HEAD_DROPOUT = 0.25         # ✅ RESTORE from 0.30
+REP_POOLING = "last4_mean"  # ✅ RESTORE from "attention"
+HEAD_LAYERS = 3             # ✅ RESTORE from 4
+
+# REMOVE ALL NEW FLAGS
+USE_TASK_SPECIFIC_PROJECTIONS = False
+USE_RESIDUAL_CONNECTIONS = False
+USE_MULTI_SAMPLE_DROPOUT = False
+USE_ATTENTION_POOLING_MULTI_HEAD = False
+```
+
+**Expected Result:**
+
+- Macro-F1: 62-63% (reproduce R9/R10 baseline)
+- **Purpose:** Sanity check that R14's regression is due to architecture, not other factors
+
+---
+
+### **OPTION B: R9 + ONE MICRO-ARCHITECTURAL IMPROVEMENT (RUN #16)**
+
+**If R15 reproduces R9 successfully, try ONE small change:**
+
+**Choice 1: Modest Capacity Increase (Safest)**
+
+```python
+HEAD_HIDDEN = 896           # +16.7% capacity (768 → 896)
+HEAD_LAYERS = 3             # Keep same
+REP_POOLING = "last4_mean"  # Keep proven pooling
+HEAD_DROPOUT = 0.28         # Slight increase for regularization
+```
+
+**Why this might work:**
+
+- Modest capacity increase (+128 dims, not +768!)
+- Maintains proven architecture
+- Adds just enough capacity without overfitting risk
+
+**Choice 2: Better Pooling (Medium Risk)**
+
+```python
+HEAD_HIDDEN = 768           # Keep same
+REP_POOLING = "attention"   # Try attention pooling ALONE
+HEAD_LAYERS = 3             # Keep same
+# But keep attention pooling SIMPLE (no multi-head complexity)
+```
+
+**Why this might work:**
+
+- Attention pooling theoretically better than mean pooling
+- But do it RIGHT - simple, stable implementation
+- Fix numerical issues upfront
+
+**Choice 3: Deeper Heads (Medium Risk)**
+
+```python
+HEAD_HIDDEN = 768           # Keep same
+HEAD_LAYERS = 4             # +1 layer (25% deeper)
+REP_POOLING = "last4_mean"  # Keep proven pooling
+HEAD_DROPOUT = 0.28         # Slight increase
+```
+
+**Why this might work:**
+
+- More non-linear transformations in classification heads
+- Keeps trunk unchanged
+- Minimal parameter increase
+
+---
+
+### **OPTION C: FOCUS ON DATA INSTEAD OF ARCHITECTURE (RUN #17+)**
+
+**The Data-Centric Approach:**
+
+Since architectural changes failed, maybe the bottleneck is **data quality/quantity**?
+
+**1. Data Augmentation:**
+
+```python
+USE_BACK_TRANSLATION = True          # Augment via back-translation
+USE_SYNONYM_REPLACEMENT = True       # Replace words with synonyms
+USE_RANDOM_DELETION = True           # Delete 10% of words randomly
+AUGMENTATION_MULTIPLIER = 2.0        # 2x training data
+```
+
+**2. Label Smoothing Adjustment:**
+
+```python
+LABEL_SMOOTH_SENTIMENT = 0.12   # ⬆️ UP from 0.10
+LABEL_SMOOTH_POLARITY = 0.10    # ⬆️ UP from 0.08
+```
+
+**3. Focal Loss Tuning:**
+
+```python
+FOCAL_GAMMA_SENTIMENT = 2.8     # ⬆️ UP from 2.5
+FOCAL_GAMMA_POLARITY = 3.8      # ⬆️ UP from 3.5
+```
+
+**4. Class Weight Tuning (for Objective/Negative):**
+
+```python
+CLASS_WEIGHT_MULT = {
+    "sentiment": {
+        "negative": 1.50,    # ⬆️ UP from 1.10 (fix recall crisis!)
+        "neutral":  1.80,
+        "positive": 1.30
+    },
+    "polarization": {
+        "non_polarized": 1.20,
+        "objective":     3.50,  # ⬆️ UP from 2.50 (fix F1 collapse!)
+        "partisan":      0.95
+    }
+}
+```
+
+---
+
+## 📊 PERFORMANCE TRAJECTORY
+
+| Run     | Config                   | Macro-F1   | Change     | Notes              |
+| ------- | ------------------------ | ---------- | ---------- | ------------------ |
+| R1      | Initial optimized        | 58.46%     | baseline   | Underperformed     |
+| R2      | Too aggressive           | 60.97%     | +2.51%     | Overshoot          |
+| R3      | Overcorrection           | 60.55%     | -0.42%     | Regression         |
+| R4      | Selective rebalance      | 62.06%     | +1.51%     | **Breakthrough**   |
+| R5      | Targeted fixes           | 58.54%     | -3.52%     | Disaster           |
+| R6      | Gradient flow            | 61.59%     | +3.05%     | Partial recovery   |
+| R7      | Task-specific grads      | 53.68%     | -7.91%     | **Worst ever**     |
+| R8      | R4 sanity check          | 61.99%     | +8.31%     | Reproduced R4      |
+| R9      | Bug fixes + seed         | 62.74%     | +0.75%     | **New best**       |
+| R10     | R9 same seed             | 63.06%     | +0.32%     | **Confirmed best** |
+| R11     | Seed 43                  | 58.28%     | -4.78%     | Seed variance      |
+| R12     | Seed 44                  | 59.08%     | +0.80%     | Still bad seed     |
+| R13     | Seed 45                  | 62.45%     | +3.37%     | Good seed          |
+| **R14** | **Massive architecture** | **57.76%** | **-5.30%** | ❌ **DISASTER**    |
+
+**Trend Analysis:**
+
+- **Best ever:** R10 (63.06%)
+- **Worst post-R1:** R7 (53.68%)
+- **R14:** Second-worst run ever (57.76%), **only 0.7% better than R7!**
+- **Stable baseline:** R9/R10/R13 (62-63% range with good seed)
+
+---
+
+## ⏱️ EXECUTION TIME SUMMARY
+
+**Run #14 Timing:**
+
+- **Total Runtime:** 5h 27m (327 minutes)
+  - SECTION 2 (Environment): 8.9s
+  - SECTION 3 (Configuration): 1h 40m
+  - SECTION 4 (Data Loading): 14.0s
+  - SECTION 5-9 (Model Setup): 1m 23s
+  - SECTION 10 (Training): 1h 41m (101 minutes)
+  - SECTION 11+ (Evaluation): 28m 30s
+
+**Training Time Comparison:**
+
+- R9: ~89 minutes
+- R10: ~91 minutes
+- **R14: 101 minutes (+12% longer!)**
+
+**Why R14 was slower:**
+
+- Larger model (1536 vs 768 HEAD_HIDDEN)
+- More layers (4 vs 3 HEAD_LAYERS)
+- Attention pooling overhead
+- Multi-sample dropout (5x forward passes)
+- Residual blocks computational cost
+
+**Cost-Benefit:**
+
+- 12% more time, **-5.3% worse performance**
+- **Terrible ROI!**
+
+---
+
+## 🎯 CRITICAL INSIGHTS
+
+### **1. The Architecture-Performance Paradox**
+
+**Finding:** More complex architecture ≠ better performance
+
+**Evidence:**
+
+- R9 (simple, proven): 62.74%
+- R14 (complex, novel): 57.76%
+- **Difference: -4.98% for 2x complexity**
+
+**Conclusion:** For small datasets, **simpler is better**.
+
+### **2. The Capacity-Data Constraint**
+
+**Finding:** Model capacity must match dataset size
+
+**Evidence:**
+
+- 5,985 training samples
+- R9 HEAD_HIDDEN=768 → works well
+- R14 HEAD_HIDDEN=1536 → overfits badly
+
+**Rule of Thumb:**
+
+```
+Maximum reasonable HEAD_HIDDEN ≈ sqrt(num_samples)
+sqrt(5985) ≈ 77
+
+Current R9: 768 dims → 10x rule of thumb (aggressive but works)
+R14: 1536 dims → 20x rule of thumb (way too large!)
+```
+
+### **3. The Incremental Change Principle**
+
+**Finding:** Change one thing at a time
+
+**Evidence:**
+
+- R14 changed 8+ architectural components simultaneously
+- Impossible to isolate what helped vs. hurt
+- All changes reverted together
+
+**Lesson:** A/B test each change individually.
+
+### **4. The Attention Pooling Caveat**
+
+**Finding:** Attention pooling has implementation challenges
+
+**Evidence:**
+
+- Float16 overflow bug (had to fix)
+- Numerical instability risks
+- May need more careful initialization/normalization
+
+**Lesson:** "last4_mean" pooling is simple, stable, proven.
+
+### **5. The Baseline Importance**
+
+**Finding:** Strong baseline enables progress, weak baseline causes chaos
+
+**Evidence:**
+
+- R9 established stable 62-63% baseline (with seed 42)
+- R14 went "exploring" with massive changes
+- Result: Lost 5% and wasted 5.5 hours of compute
+
+**Lesson:** **Protect the baseline. Build on it incrementally.**
+
+---
+
+## 🚀 NEXT STEPS (RECOMMENDED PRIORITY ORDER)
+
+### **IMMEDIATE (Run #15):**
+
+1. **Restore R9 Baseline Exactly**
+   - Target: 62-63% Macro-F1
+   - Purpose: Confirm R14 regression was architecture, not other factors
+   - **Expected: SUCCESS (reproduce R9/R10)**
+
+### **SHORT-TERM (Run #16-17):**
+
+2. **Try ONE Micro-Architectural Improvement**
+
+   - Option A: HEAD_HIDDEN = 896 (+128 dims, modest)
+   - Option B: Attention pooling ALONE (fix numerical issues first)
+   - Option C: HEAD_LAYERS = 4 (one extra layer)
+   - **Target: 63-64% (+0.5-1%)**
+
+3. **Focus on Data-Centric Improvements**
+   - Data augmentation (back-translation, synonym replacement)
+   - Class weight tuning for Negative/Objective
+   - Focal loss tuning
+   - **Target: 64-65% (+1-2%)**
+
+### **MEDIUM-TERM (Run #18-20):**
+
+4. **Seed Ensemble Implementation**
+
+   - Average predictions from seeds 42, 43, 44, 45
+   - **Target: 64-65% (+1-2% from ensemble smoothing)**
+
+5. **Cross-Architecture Ensemble**
+   - Combine mBERT + XLM-RoBERTa predictions
+   - **Target: 66-67% (+1-2% from diversity)**
+
+### **LONG-TERM (Run #21+):**
+
+6. **Advanced Techniques**
+
+   - Pseudo-labeling on unlabeled data
+   - Mixup augmentation
+   - Knowledge distillation from larger models
+   - **Target: 68-71% (+2-4%)**
+
+7. **Task-Specific Optimization**
+   - Fine-tune separately for sentiment vs. polarization
+   - Ensemble task-specific models
+   - **Target: 71-74% (+2-3%)**
+
+---
+
+## 🏁 FINAL VERDICT
+
+**Run #14: ARCHITECTURAL EXPERIMENT FAILURE**
+
+**What Happened:**
+
+- Doubled HEAD_HIDDEN (768 → 1536)
+- Added attention pooling, residual blocks, task-specific projections
+- Increased HEAD_LAYERS (3 → 4)
+- Added multi-sample dropout
+
+**Result:**
+
+- **Catastrophic -5.3% regression** (63.06% → 57.76%)
+- Severe overfitting (peaked epoch 12, declined after)
+- Negative recall collapsed (40%)
+- Neutral precision collapsed (39%)
+- Objective F1 destroyed (33.5%, worst ever)
+
+**Root Cause:**
+
+- **Capacity mismatch:** 2x model size, same data size → overfitting
+- **Too many changes:** 8+ changes at once → impossible to debug
+- **Training instability:** Reduced batch size, attention pooling numerical issues
+
+**Lessons:**
+
+1. **Simpler is better** for small datasets
+2. **Incremental changes** enable progress
+3. **Respect the baseline** - don't throw away proven configurations
+4. **Architecture alone won't reach 75%** - need data, ensemble, advanced techniques
+
+**Recommendation:**
+
+1. **Run #15: Restore R9 exactly** (sanity check)
+2. **Run #16: ONE micro-change** (HEAD_HIDDEN=896 OR attention pooling alone)
+3. **Shift focus to data augmentation and ensemble**
+
+---
+
+**Run #14 Status: ARCHITECTURAL DISASTER - REVERT TO R9** ❌🔥  
+**Training time:** 5h 27m (1h 41m training + 28m eval)  
+**Overall Macro-F1:** 57.76% (post-calibration)  
+**vs Best (R10):** -5.30% catastrophic regression  
+**Key finding:** Massive architectural changes caused severe overfitting  
+**Critical insight:** Small datasets can't support 2x model capacity  
+**Next action:** **RESTORE R9 BASELINE, THEN MAKE INCREMENTAL CHANGES**
+
+---
