@@ -260,6 +260,8 @@ device
 data_path = '/content/augmented_adjudications_2025-10-22.csv'
 CSV_PATH = '/content/augmented_adjudications_2025-10-22.csv'
 
+USE_AUGMENTED_TRAIN = True
+AUG_CSV_PATH = '/content/augmented_adjudications_2025-10-22.csv'
 
 TITLE_COL = "Title"
 TEXT_COL  = "Comment"
@@ -272,13 +274,13 @@ MODEL_CONFIGS = {
 MODELS_TO_RUN = ["xlm_roberta"]  # ← TRAINING ONLY XLM-RoBERTa
 
 # ============================================================================
-# CORE TRAINING - RUN #15 POSITIVE RECOVERY (TARGET ≥72% MACRO-F1)
-# Run #14 Result: 67.07% macro-F1 (Neutral steady, positive/non-pol slid)
-# Run #15 Goal: Recover positive & non-polarized F1 while keeping neutral >72%
-# Strategy: Lift positive/non-pol weights, keep neutral moderate, enforce calibration safeguards
+# CORE TRAINING - RUN #16 DATA-ALIGNED RESET (TARGET ≥72% MACRO-F1)
+# Run #15 Result: 67.39% macro-F1 (polarization ↑, sentiment plateau)
+# Run #16 Goal: Align pipeline with mBERT wins (longer sequences, clean splits, lighter boosts)
+# Strategy: MAX_LENGTH 320, joint stratified splits, train-only augmentation, softer weighting
 # Dataset: augmented_adjudications_2025-10-22.csv (13,063 rows; same split 9,144 / 1,959 / 1,960)
 # ============================================================================
-MAX_LENGTH = 224
+MAX_LENGTH = 320                # ⬆️ MATCH mBERT (was 224)
 EPOCHS = 18                # ✅ KEEP - convergence sweet spot with more data
 BATCH_SIZE = 20           # ✅ KEEP - stable with grad accumulation
 LR = 3.0e-5              # ✅ KEEP (proven optimal!)
@@ -287,7 +289,7 @@ WARMUP_RATIO = 0.25      # ✅ KEEP - smoother ramp for re-weighted classes
 EARLY_STOP_PATIENCE = 6  # ✅ KEEP (proven optimal!)
 GRAD_ACCUM_STEPS = 3     # Effective batch: 60
 
-# Per-task loss - RUN #15 ADJUSTMENTS
+# Per-task loss - RUN #16 ADJUSTMENTS
 USE_FOCAL_SENTIMENT = True
 USE_FOCAL_POLARITY  = True
 FOCAL_GAMMA_SENTIMENT = 2.5   # ✅ KEEP (proven optimal)
@@ -299,7 +301,7 @@ LABEL_SMOOTH_POLARITY = 0.08  # ✅ KEEP (proven optimal)
 TASK_LOSS_WEIGHTS = {"sentiment": 1.0, "polarization": 1.4}  # 🔥 INCREASED (was 1.2)
 
 # Additional stability parameters
-MAX_GRAD_NORM = 1.0          # 🔥 RELAXED (Run #1: 0.7 → 1.0) - Allow bigger updates with high LR
+MAX_GRAD_NORM = 0.5          # ⬇️ TIGHTER (match mBERT stability)
 USE_GRADIENT_CHECKPOINTING = True  # Memory efficiency
 
 # Learning Rate Scheduling - KEEP PROVEN CONFIG
@@ -307,19 +309,19 @@ LR_SCHEDULER_TYPE = "cosine"  # 🔥 Cosine annealing with warmup for smooth dec
 NUM_CYCLES = 0.5              # ✅ KEEP (proven optimal - smooth convergence!)
 
 # ============================================================================
-# CLASS WEIGHTS - RUN #15 REBALANCING
-# Positive/non-polarized need a lift; neutral stays modest; objective still bottleneck
+# CLASS WEIGHTS - RUN #16 REBALANCING
+# Light-touch multipliers; heavy boosts handled only when augmentation disabled
 # ============================================================================
 CLASS_WEIGHT_MULT = {
     "sentiment": {
-        "negative": 1.15,    # ✅ KEEP - maintains recovered negative precision
-        "neutral":  1.18,    # ⬇️ SLIGHT (1.20 → 1.18) - ease neutral dominance, stay >72% F1
-        "positive": 1.45     # ⬆️ BOOST (1.40 → 1.45) - regain positive recall lost in Run #14
+        "negative": 1.05,
+        "neutral":  1.10,
+        "positive": 1.30
     },
     "polarization": {
-        "non_polarized": 1.25,  # ⬆️ BOOST (1.20 → 1.25) - recover non-pol F1 drop
-        "objective":     2.05,  # ✅ KEEP - inching toward 55-60% goal
-        "partisan":      1.05   # ✅ KEEP - retains partisan gains
+        "non_polarized": 1.10,
+        "objective":     2.00,
+        "partisan":      1.00
     }
 }
 
@@ -327,19 +329,19 @@ CLASS_WEIGHT_MULT = {
 MAX_CLASS_WEIGHT = 8.0  # ⬇️ REDUCED (Run #11: 12.0 → 8.0) - Less extreme weights needed
 
 # ============================================================================
-# OVERSAMPLING - RUN #15 CONTROLLED BOOSTS
-# Maintain objective cushion, neutral boost moderate to avoid positive bleed
+# OVERSAMPLING - RUN #16 CONTROLLED BOOSTS
+# Mild boosts (disabled automatically when augmented train enabled)
 # ============================================================================
 USE_OVERSAMPLING = True
 USE_JOINT_OVERSAMPLING = True
 USE_SMART_OVERSAMPLING = True
-JOINT_ALPHA = 0.65              # ✅ KEEP (proven optimal)
-JOINT_OVERSAMPLING_MAX_MULT = 4.6  # ⬆️ SLIGHT (4.5 → 4.6) - tiny flexibility for minority pairs
-OBJECTIVE_BOOST_MULT = 1.75      # ⬆️ SLIGHT (1.7 → 1.75) - stabilize objective predictions
-NEUTRAL_BOOST_MULT = 0.90        # ✅ KEEP - neutral still needs mild support without overwhelming positive
+JOINT_ALPHA = 0.60
+JOINT_OVERSAMPLING_MAX_MULT = 3.5
+OBJECTIVE_BOOST_MULT = 1.40
+NEUTRAL_BOOST_MULT = 0.95
 
 # ============================================================================
-# ARCHITECTURE - RUN #15 (STILL 768 HIDDEN, EXTRA DROPOUT)
+# ARCHITECTURE - RUN #16 (STILL 768 HIDDEN, EXTRA DROPOUT)
 # 768 hidden remains best trade-off; dropout stays elevated for minority stability
 # ============================================================================
 HEAD_HIDDEN = 768            # ✅ KEEP (best-performing hidden size)
@@ -360,17 +362,17 @@ USE_LLRD = True
 LLRD_DECAY = 0.88            # ✅ KEEP (proven optimal)
 HEAD_LR_MULT = 3.5           # ✅ KEEP (proven optimal)
 
-OUT_DIR = "./runs_xlm_roberta_run15"  # ← Run-specific output directory to avoid calibration conflicts
+OUT_DIR = "./runs_xlm_roberta_run16"  # ← Run-specific output directory to avoid calibration conflicts
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ============================================================================
-# CONFIGURATION SUMMARY - RUN #15 POSITIVE RECOVERY
+# CONFIGURATION SUMMARY - RUN #16 DATA-ALIGNED RESET
 # ============================================================================
-print("📊 XLM-RoBERTa RUN #15 POSITIVE RECOVERY - TARGET: ≥72% MACRO-F1")
-print("⚠️ Run #14 Result: 67.07% macro-F1 (Neutral steady, positive/non-pol regressed)")
+print("📊 XLM-RoBERTa RUN #16 DATA-ALIGNED RESET - TARGET: ≥72% MACRO-F1")
+print("⚠️ Run #15 Result: 67.39% macro-F1 (Polarization up, sentiment flat)")
 print("✅ Dataset: 13,063 samples (+31%): Objective 588→1,423, Neutral 2,677→5,775")
-print("🔧 Run #15 Strategy: Boost positive & non-pol weights, monitor neutral, enforce calibration safeguards")
-print("🎯 Focus: Keep neutral ≥72% while lifting positive/non-pol back above 72/61%")
+print("🔧 Run #16 Strategy: 320 tokens, joint strat splits, train-only augmentation, softer weighting")
+print("🎯 Focus: Lift objective/non-pol & positive via cleaner data pipeline")
 print("="*70)
 print(f"📊 Training Settings:")
 print(f"   Epochs: {EPOCHS} | Batch: {BATCH_SIZE} | Grad Accum: {GRAD_ACCUM_STEPS} (Effective: {BATCH_SIZE*GRAD_ACCUM_STEPS})")
@@ -384,10 +386,9 @@ print(f"\n⚖️ Class Rebalancing:")
 print(f"   Sentiment Multipliers: {CLASS_WEIGHT_MULT['sentiment']}")
 print(f"   Polarization Multipliers: {CLASS_WEIGHT_MULT['polarization']}")
 print(f"   Max Class Weight Cap: {MAX_CLASS_WEIGHT}")
-print(f"\n📈 Oversampling (Run #15 controlled boosts):")
-print(f"   Joint Alpha: {JOINT_ALPHA} | Max Mult: {JOINT_OVERSAMPLING_MAX_MULT}x (expected: ~8-9)")
-print(f"   Objective Boost: {OBJECTIVE_BOOST_MULT}x (keeps objective stable)")
-print(f"   Neutral Boost: {NEUTRAL_BOOST_MULT}x (maintains neutral without drowning positives)")
+print(f"\n📈 Oversampling (Run #16 mild boosts; disabled when augmented train active):")
+print(f"   Joint Alpha: {JOINT_ALPHA} | Max Mult: {JOINT_OVERSAMPLING_MAX_MULT}x")
+print(f"   Objective Boost: {OBJECTIVE_BOOST_MULT}x | Neutral Boost: {NEUTRAL_BOOST_MULT}x")
 print(f"\n🏗️ Architecture:")
 print(f"   Head Hidden: {HEAD_HIDDEN} | Layers: {HEAD_LAYERS} | Dropout: {HEAD_DROPOUT}")
 print(f"   Pooling: {REP_POOLING}")
@@ -395,6 +396,7 @@ print(f"\n🛡️ Regularization:")
 print(f"   R-Drop: α={RDROP_ALPHA}, Warmup={RDROP_WARMUP_EPOCHS} epochs")
 print(f"   LLRD: Decay={LLRD_DECAY}, Head LR Mult={HEAD_LR_MULT}x")
 print(f"\n💾 Output: {OUT_DIR}")
+print(f"📦 Augmented Train Enabled: {USE_AUGMENTED_TRAIN} (path: {AUG_CSV_PATH})")
 print("="*70)
 
 # End timing for section 3
@@ -430,18 +432,42 @@ num_pol_classes  = len(pol_le.classes_)
 print("Sentiment classes:", dict(enumerate(sent_le.classes_)))
 print("Polarization classes:", dict(enumerate(pol_le.classes_)))
 
-# Splits (stratify by sentiment)
+# Splits (joint stratify sentiment × polarization to preserve rare combos)
 from sklearn.model_selection import train_test_split
 X = df[[TITLE_COL, TEXT_COL]].copy()
 y_sent = df["sent_y"].values
 y_pol  = df["pol_y"].values
 
+y_joint = y_sent * 10 + y_pol
 X_train, X_tmp, ysent_train, ysent_tmp, ypol_train, ypol_tmp = train_test_split(
-    X, y_sent, y_pol, test_size=0.3, random_state=42, stratify=y_sent
+    X, y_sent, y_pol, test_size=0.3, random_state=42, stratify=y_joint
 )
+joint_tmp = ysent_tmp * 10 + ypol_tmp
 X_val, X_test, ysent_val, ysent_test, ypol_val, ypol_test = train_test_split(
-    X_tmp, ysent_tmp, ypol_tmp, test_size=0.5, random_state=42, stratify=ysent_tmp
+    X_tmp, ysent_tmp, ypol_tmp, test_size=0.5, random_state=42, stratify=joint_tmp
 )
+
+# Append augmented rows to TRAIN only (avoid leakage into val/test)
+if globals().get("USE_AUGMENTED_TRAIN", True):
+    AUG_CSV_PATH = globals().get("AUG_CSV_PATH", "/content/augmented_adjudications_2025-10-22.csv")
+    if os.path.isfile(AUG_CSV_PATH):
+        aug_df = pd.read_csv(AUG_CSV_PATH).dropna(subset=[TITLE_COL, TEXT_COL, SENT_COL, POL_COL])
+        aug_df["sent_y"] = sent_le.transform(aug_df[SENT_COL])
+        aug_df["pol_y"]  = pol_le.transform(aug_df[POL_COL])
+        X_train = pd.concat([X_train, aug_df[[TITLE_COL, TEXT_COL]]], ignore_index=True)
+        ysent_train = np.concatenate([ysent_train, aug_df["sent_y"].values])
+        ypol_train  = np.concatenate([ypol_train,  aug_df["pol_y"].values])
+
+        # With augmented train, rely on natural distribution (disable manual boosts/oversampling)
+        CLASS_WEIGHT_MULT = {
+            "sentiment": {"negative": 1.00, "neutral": 1.00, "positive": 1.10},
+            "polarization": {"non_polarized": 1.00, "objective": 1.40, "partisan": 1.00},
+        }
+        MAX_CLASS_WEIGHT = 6.0
+        USE_OVERSAMPLING = False
+        USE_SMART_OVERSAMPLING = False
+    else:
+        print(f"[Warn] USE_AUGMENTED_TRAIN=True but file not found: {AUG_CSV_PATH}")
 
 print("Train size:", len(X_train), "Val size:", len(X_val), "Test size:", len(X_test))
 
@@ -497,7 +523,7 @@ timer.start_section("SECTION 5-9: Model Architecture & Training Setup")
 from torch.utils.data import Dataset
 
 class TaglishDataset(Dataset):
-    def __init__(self, titles, texts, y_sent, y_pol, tokenizer, max_length=224):
+    def __init__(self, titles, texts, y_sent, y_pol, tokenizer, max_length=MAX_LENGTH):
         self.titles = list(titles)
         self.texts  = list(texts)
         self.y_sent = np.array(y_sent)
