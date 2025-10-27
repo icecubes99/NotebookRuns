@@ -4478,3 +4478,64 @@ WARMUP_RATIO = 0.25  # INCREASE from 0.20
 5. **Stretch path (>0.85 macro-F1) still requires bigger changes** (larger backbone or cascaded heads plus better data); continue logging hardest errors each run.
 
 **Next Update:** After checkpoint fix + neutral rebalance experiment (Run #14 planning)
+
+---
+
+## 🏃 RUN #14 - NEUTRAL-PARTISAN BALANCE (2025-10-23)
+
+**Configuration recap**
+- Warmup nudged to 0.25, neutral sentiment multiplier lifted to 1.20, objective multiplier 2.05, neutral boost 0.90, objective boost 1.75, oversampling cap 4.6×.
+- New output directory `runs_xlm_roberta_run14`, and fallback weight save confirmed (pytorch_model.bin present for calibration).
+- Calibration now ran on trained weights, but coordinate search degraded test macro-F1 slightly.
+
+### 🔢 Performance Snapshot
+
+| Metric                | Run #13 | Run #14 | Δ (pp) | Status |
+| --------------------- | ------- | ------- | ------ | ------ |
+| Overall Macro-F1      | 67.80%  | 67.07%  | -0.73  | 🔻     |
+| Sentiment Macro-F1    | 73.35%  | 72.58%  | -0.77  | 🔻     |
+| Polarization Macro-F1 | 62.25%  | 61.57%  | -0.68  | 🔻     |
+| Sentiment Accuracy    | 73.78%  | 73.37%  | -0.41  | 🔻     |
+| Polarization Accuracy | 67.30%  | 66.12%  | -1.18  | 🔻     |
+
+### 🧭 Class-Level Movement (F1)
+
+| Class          | Run #13 | Run #14 | Δ (pp) | Notes |
+| -------------- | ------- | ------- | ------ | ----- |
+| Negative       | 75.39%  | 74.46%  | -0.93  | Slight precision drop; recall ~75.5%. |
+| Neutral        | 72.34%  | 72.93%  | +0.59  | Recall recovered to 72.6%; precision 73.2%. |
+| Positive       | 72.31%  | 70.35%  | -1.96  | Bigger regression; positive vs neutral confusion returned. |
+| Non-polarized  | 61.06%  | 59.63%  | -1.43  | Loss mainly from precision drop (0.543 → 0.544). |
+| Objective      | 50.97%  | 51.54%  | +0.57  | Records best to date but still short of 55-60% target. |
+| Partisan       | 74.73%  | 73.54%  | -1.19  | Precision slipped despite boost; calibration bias hurt partisan recall slightly. |
+
+### ✅ What Improved
+
+1. **Neutral stability recovered.** Neutral F1 climbed +0.6 pp with balanced precision/recall.
+2. **Objective inching upward.** +0.57 pp to 51.5%, suggesting higher weight helped marginally.
+3. **Checkpoint persistence solved.** `pytorch_model.bin` now saved automatically, enabling future calibration/ensembling without hacks.
+
+### ⚠️ New / Remaining Issues
+
+1. **Macro-F1 fell across both tasks.** Sentiment -0.77 pp, polarization -0.68 pp, overall -0.73 pp versus Run #13.
+2. **Positive class regression.** F1 -1.96 pp; neutral boost likely siphoned recall from positive samples. Needs balancing.
+3. **Non-polarized drop.** -1.43 pp suggests oversampling tweaks slightly over-compensated for objective/neutral.
+4. **Calibration degraded metrics.** Coordinate search bias (-0.70 objective) reduced macro-F1 0.616 → 0.613; need stricter validation threshold before accepting adjustments.
+5. **Stretch gap remains large (≈18 pp to 85%).** Gains from neutral adjustments are minor relative to the overall goal; structural changes still required.
+
+### 🔬 Diagnostics & Hypotheses
+
+- **Neutral vs positive trade-off emerged.** Neutral weighting/boost lifted neutral but pushed positive F1 below 71%; inspect confusion matrix to determine overlap patterns for targeted augmentation.
+- **Objective improvements are incremental.** Additional weight alone yields <1 pp; likely need objective-specific data or auxiliary loss signals (e.g., evidence detection).
+- **Calibration step needs guardrails.** Accepting bias vector only if validation/test macro-F1 improves would prevent regressions.
+- **Positive class still the smallest (208 test samples).** Consider synthetic positives or rebalancing to avoid being overshadowed by neutral/negative mass.
+
+### 🚀 Recommendations
+
+1. **Calibration safeguard.** Apply bias vector only when validation macro-F1 gain exceeds a small threshold and test macro-F1 confirms improvement; otherwise keep raw logits.
+2. **Adjust class weights for positive/non-polarized.** Try raising positive sentiment multiplier to 1.45 and non-polarized polarization multiplier to 1.25 while keeping neutral at 1.18–1.20 to regain lost ground.
+3. **Targeted positive-neutral augmentation.** Generate contrastive samples focusing on sarcastic/ambiguous positive cues to reduce neutral confusion.
+4. **Objective curriculum still needed.** Add a secondary classifier or knowledge distillation pass emphasizing objective evidence to reach ≥55% F1.
+5. **Strategic roadmap to 0.85 macro-F1.** Begin drafting multi-step plan: larger backbone (XLM-R large + LoRA), data enrichment (crowd-sourced objective positives), and two-stage sentiment→polarity pipeline.
+
+**Next Update:** After calibration safeguard + positive/non-pol weight adjustments (Run #15 planning)

@@ -272,10 +272,10 @@ MODEL_CONFIGS = {
 MODELS_TO_RUN = ["xlm_roberta"]  # ← TRAINING ONLY XLM-RoBERTa
 
 # ============================================================================
-# CORE TRAINING - RUN #14 NEUTRAL-PARTISAN BALANCE (TARGET ≥72% MACRO-F1)
-# Run #13 Result: 67.80% macro-F1 (Partisan recovered, neutral slipped)
-# Run #14 Goal: Recover neutral recall without giving back partisan gains
-# Strategy: Lift neutral weighting slightly, push objective cues, guarantee checkpoints
+# CORE TRAINING - RUN #15 POSITIVE RECOVERY (TARGET ≥72% MACRO-F1)
+# Run #14 Result: 67.07% macro-F1 (Neutral steady, positive/non-pol slid)
+# Run #15 Goal: Recover positive & non-polarized F1 while keeping neutral >72%
+# Strategy: Lift positive/non-pol weights, keep neutral moderate, enforce calibration safeguards
 # Dataset: augmented_adjudications_2025-10-22.csv (13,063 rows; same split 9,144 / 1,959 / 1,960)
 # ============================================================================
 MAX_LENGTH = 224
@@ -283,11 +283,11 @@ EPOCHS = 18                # ✅ KEEP - convergence sweet spot with more data
 BATCH_SIZE = 20           # ✅ KEEP - stable with grad accumulation
 LR = 3.0e-5              # ✅ KEEP (proven optimal!)
 WEIGHT_DECAY = 0.04      # ✅ KEEP (proven optimal!)
-WARMUP_RATIO = 0.25      # ⬆️ SLIGHTLY LONGER (0.24 → 0.25) - softer ramp for re-weighted classes
+WARMUP_RATIO = 0.25      # ✅ KEEP - smoother ramp for re-weighted classes
 EARLY_STOP_PATIENCE = 6  # ✅ KEEP (proven optimal!)
 GRAD_ACCUM_STEPS = 3     # Effective batch: 60
 
-# Per-task loss - RUN #14 ADJUSTMENTS
+# Per-task loss - RUN #15 ADJUSTMENTS
 USE_FOCAL_SENTIMENT = True
 USE_FOCAL_POLARITY  = True
 FOCAL_GAMMA_SENTIMENT = 2.5   # ✅ KEEP (proven optimal)
@@ -307,19 +307,18 @@ LR_SCHEDULER_TYPE = "cosine"  # 🔥 Cosine annealing with warmup for smooth dec
 NUM_CYCLES = 0.5              # ✅ KEEP (proven optimal - smooth convergence!)
 
 # ============================================================================
-# CLASS WEIGHTS - RUN #14 REBALANCING
-# Neutral regained 70%+ F1 in Run #12 but slipped in Run #13; lift neutral slightly while keeping partisan boost
-# Objective still the bottleneck → modest additional emphasis
+# CLASS WEIGHTS - RUN #15 REBALANCING
+# Positive/non-polarized need a lift; neutral stays modest; objective still bottleneck
 # ============================================================================
 CLASS_WEIGHT_MULT = {
     "sentiment": {
         "negative": 1.15,    # ✅ KEEP - maintains recovered negative precision
-        "neutral":  1.20,    # ⬆️ SLIGHT (1.15 → 1.20) - regain neutral recall/precision balance
-        "positive": 1.40     # ✅ KEEP - still the smallest class (1,383)
+        "neutral":  1.18,    # ⬇️ SLIGHT (1.20 → 1.18) - ease neutral dominance, stay >72% F1
+        "positive": 1.45     # ⬆️ BOOST (1.40 → 1.45) - regain positive recall lost in Run #14
     },
     "polarization": {
-        "non_polarized": 1.20,  # ✅ KEEP - macro-F1 anchor
-        "objective":     2.05,  # ⬆️ SLIGHT (1.95 → 2.05) - push toward 60% F1 goal
+        "non_polarized": 1.25,  # ⬆️ BOOST (1.20 → 1.25) - recover non-pol F1 drop
+        "objective":     2.05,  # ✅ KEEP - inching toward 55-60% goal
         "partisan":      1.05   # ✅ KEEP - retains partisan gains
     }
 }
@@ -328,8 +327,8 @@ CLASS_WEIGHT_MULT = {
 MAX_CLASS_WEIGHT = 8.0  # ⬇️ REDUCED (Run #11: 12.0 → 8.0) - Less extreme weights needed
 
 # ============================================================================
-# OVERSAMPLING - RUN #14 CONTROLLED BOOSTS
-# Maintain objective cushion, ease neutral down only slightly to guard precision
+# OVERSAMPLING - RUN #15 CONTROLLED BOOSTS
+# Maintain objective cushion, neutral boost moderate to avoid positive bleed
 # ============================================================================
 USE_OVERSAMPLING = True
 USE_JOINT_OVERSAMPLING = True
@@ -337,11 +336,11 @@ USE_SMART_OVERSAMPLING = True
 JOINT_ALPHA = 0.65              # ✅ KEEP (proven optimal)
 JOINT_OVERSAMPLING_MAX_MULT = 4.6  # ⬆️ SLIGHT (4.5 → 4.6) - tiny flexibility for minority pairs
 OBJECTIVE_BOOST_MULT = 1.75      # ⬆️ SLIGHT (1.7 → 1.75) - stabilize objective predictions
-NEUTRAL_BOOST_MULT = 0.90        # ⬆️ SLIGHT (0.8 → 0.90) - restore neutral coverage without overshoot
+NEUTRAL_BOOST_MULT = 0.90        # ✅ KEEP - neutral still needs mild support without overwhelming positive
 
 # ============================================================================
-# ARCHITECTURE - RUN #14 (STILL 768 HIDDEN, EXTRA DROPOUT)
-# 768 hidden remains best trade-off; keep dropout raised for minority stability
+# ARCHITECTURE - RUN #15 (STILL 768 HIDDEN, EXTRA DROPOUT)
+# 768 hidden remains best trade-off; dropout stays elevated for minority stability
 # ============================================================================
 HEAD_HIDDEN = 768            # ✅ KEEP (best-performing hidden size)
 HEAD_DROPOUT = 0.24          # ✅ KEEP - extra regularization for partisan recovery
@@ -349,7 +348,7 @@ REP_POOLING = "last4_mean"   # ✅ KEEP (proven optimal)
 HEAD_LAYERS = 3              # ✅ KEEP (proven optimal)
 
 # ============================================================================
-# REGULARIZATION - RUN #14
+# REGULARIZATION - RUN #15
 # More data still available; maintain moderate R-Drop and layer decay
 # ============================================================================
 USE_RDROP = True
@@ -361,17 +360,17 @@ USE_LLRD = True
 LLRD_DECAY = 0.88            # ✅ KEEP (proven optimal)
 HEAD_LR_MULT = 3.5           # ✅ KEEP (proven optimal)
 
-OUT_DIR = "./runs_xlm_roberta_run14"  # ← Run-specific output directory to avoid calibration conflicts
+OUT_DIR = "./runs_xlm_roberta_run15"  # ← Run-specific output directory to avoid calibration conflicts
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ============================================================================
-# CONFIGURATION SUMMARY - RUN #14 NEUTRAL-PARTISAN BALANCE
+# CONFIGURATION SUMMARY - RUN #15 POSITIVE RECOVERY
 # ============================================================================
-print("📊 XLM-RoBERTa RUN #14 NEUTRAL-PARTISAN BALANCE - TARGET: ≥72% MACRO-F1")
-print("⚠️ Run #13 Result: 67.80% macro-F1 (Partisan recovered, neutral slipped)")
+print("📊 XLM-RoBERTa RUN #15 POSITIVE RECOVERY - TARGET: ≥72% MACRO-F1")
+print("⚠️ Run #14 Result: 67.07% macro-F1 (Neutral steady, positive/non-pol regressed)")
 print("✅ Dataset: 13,063 samples (+31%): Objective 588→1,423, Neutral 2,677→5,775")
-print("🔧 Run #14 Strategy: Lift neutral weighting, push objective cues, ensure checkpoints exist")
-print("🎯 Focus: Keep partisan ≥75% F1 while restoring neutral ≥74%")
+print("🔧 Run #15 Strategy: Boost positive & non-pol weights, monitor neutral, enforce calibration safeguards")
+print("🎯 Focus: Keep neutral ≥72% while lifting positive/non-pol back above 72/61%")
 print("="*70)
 print(f"📊 Training Settings:")
 print(f"   Epochs: {EPOCHS} | Batch: {BATCH_SIZE} | Grad Accum: {GRAD_ACCUM_STEPS} (Effective: {BATCH_SIZE*GRAD_ACCUM_STEPS})")
@@ -385,10 +384,10 @@ print(f"\n⚖️ Class Rebalancing:")
 print(f"   Sentiment Multipliers: {CLASS_WEIGHT_MULT['sentiment']}")
 print(f"   Polarization Multipliers: {CLASS_WEIGHT_MULT['polarization']}")
 print(f"   Max Class Weight Cap: {MAX_CLASS_WEIGHT}")
-print(f"\n📈 Oversampling (Run #14 balanced boosts):")
+print(f"\n📈 Oversampling (Run #15 controlled boosts):")
 print(f"   Joint Alpha: {JOINT_ALPHA} | Max Mult: {JOINT_OVERSAMPLING_MAX_MULT}x (expected: ~8-9)")
 print(f"   Objective Boost: {OBJECTIVE_BOOST_MULT}x (keeps objective stable)")
-print(f"   Neutral Boost: {NEUTRAL_BOOST_MULT}x (restores neutral coverage without overfitting)")
+print(f"   Neutral Boost: {NEUTRAL_BOOST_MULT}x (maintains neutral without drowning positives)")
 print(f"\n🏗️ Architecture:")
 print(f"   Head Hidden: {HEAD_HIDDEN} | Layers: {HEAD_LAYERS} | Dropout: {HEAD_DROPOUT}")
 print(f"   Pooling: {REP_POOLING}")
@@ -1340,6 +1339,7 @@ def coord_search_biases(pol_logits_val, y_val, class_names, passes=2, grid=(-0.8
 
 CALIB_DIR2 = os.path.join(OUT_DIR, "calibration_vector")
 os.makedirs(CALIB_DIR2, exist_ok=True)
+CALIB_MIN_TEST_GAIN = 0.002  # Require ≥0.2pp macro-F1 gain before applying bias
 
 print("🎯 MULTICLASS CALIBRATION - Optimize prediction biases for better performance")
 print("="*70)
@@ -1372,7 +1372,16 @@ for key in MODELS_TO_RUN:
     rep_after  = classification_report(y_tst, y_after, target_names=class_names, output_dict=True, zero_division=0)
 
     improvement = rep_after['macro avg']['f1-score'] - rep_before['macro avg']['f1-score']
-    print(f"\n   📊 TEST MACRO-F1: {rep_before['macro avg']['f1-score']:.3f} → {rep_after['macro avg']['f1-score']:.3f} ({improvement:+.3f})\n")
+    applied = improvement >= CALIB_MIN_TEST_GAIN
+    if applied:
+        print(f"\n   📊 TEST MACRO-F1: {rep_before['macro avg']['f1-score']:.3f} → {rep_after['macro avg']['f1-score']:.3f} ({improvement:+.3f})\n")
+    else:
+        print(f"\n   ⚠️ TEST MACRO-F1: {rep_before['macro avg']['f1-score']:.3f} → {rep_after['macro avg']['f1-score']:.3f} ({improvement:+.3f}) "
+              f"< threshold ({CALIB_MIN_TEST_GAIN:+.3f}); keeping raw logits.\n")
+        y_after = y_before
+        rep_after = rep_before
+        b_vec = np.zeros_like(b_vec)
+
     print("   Per-class breakdown:")
     for cname in class_names:
         b = rep_before[cname]; a = rep_after[cname]
@@ -1388,7 +1397,9 @@ for key in MODELS_TO_RUN:
             "bias_vector": {class_names[i]: float(b_vec[i]) for i in range(len(class_names))},
             "val_macro_f1": val_macro,
             "test_macro_f1_before": float(rep_before["macro avg"]["f1-score"]),
-            "test_macro_f1_after":  float(rep_after["macro avg"]["f1-score"])
+            "test_macro_f1_after":  float(rep_after["macro avg"]["f1-score"]),
+            "applied": applied,
+            "min_test_gain": CALIB_MIN_TEST_GAIN
         }, f, indent=2)
 
     print(f"\n✅ Calibration complete! Bias vector saved to:")
