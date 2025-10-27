@@ -1,4 +1,3 @@
-
 🚀 Starting SECTION 10: Model Training Execution...
 
 === Running xlm_roberta -> xlm-roberta-base ===
@@ -27,7 +26,7 @@ Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	xlm_roberta	xlm-roberta-base	0.741837	0.746566
+0	xlm_roberta	xlm-roberta-base	0.741837	0.746566	0.724598	0.734148	0.660714	0.607518	0.639577	0.615402	0.674775	7.0357	278.581	13.929
 
 === Detailed breakdowns for xlm_roberta ===
 

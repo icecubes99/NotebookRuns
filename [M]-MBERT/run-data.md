@@ -1,56 +1,61 @@
 🚀 Starting SECTION 10: Model Training Execution...
 
 === Running mbert -> bert-base-multilingual-cased ===
-🔥 Enhanced Oversampling: min=1.00, max=68.28
-   ├─ Objective boosted samples: 405 (target: weak class at 40% F1)
-   └─ Neutral boosted samples: 1874 (target: weak class at 49% F1)
- [ 146/2900 01:38 < 31:32, 1.46 it/s, Epoch 1.00/20]
+tokenizer_config.json:   0%|          | 0.00/49.0 [00:00<?, ?B/s]config.json:   0%|          | 0.00/625 [00:00<?, ?B/s]vocab.txt:   0%|          | 0.00/996k [00:00<?, ?B/s]tokenizer.json:   0%|          | 0.00/1.96M [00:00<?, ?B/s]model.safetensors:   0%|          | 0.00/714M [00:00<?, ?B/s]
+🔥 Enhanced Oversampling: min=1.00, max=1.90
+   ├─ Objective boosted samples: 0 (target: weak class at 40% F1)
+   └─ Neutral boosted samples: 0 (target: weak class at 49% F1)
+ [9240/9240 3:24:26, Epoch 19/20]
 Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	Pol Prec	Pol Rec	Pol F1	Macro F1 Avg
-0	3.133500	No log	0.269565	0.423025	0.334944	0.144555	0.062207	0.020736	0.333333	0.039043	0.091799
- [2900/2900 1:39:47, Epoch 19/20]
-Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	Pol Prec	Pol Rec	Pol F1	Macro F1 Avg
-0	3.133500	No log	0.269565	0.423025	0.334944	0.144555	0.062207	0.020736	0.333333	0.039043	0.091799
-2	1.134300	No log	0.301672	0.273150	0.427080	0.280311	0.125753	0.411888	0.368195	0.112268	0.196290
-4	0.379000	No log	0.387291	0.624080	0.553922	0.416336	0.255518	0.480124	0.527970	0.243526	0.329931
-6	0.235800	No log	0.360535	0.640953	0.538341	0.398770	0.333779	0.518705	0.550354	0.348906	0.373838
-8	0.166200	No log	0.423411	0.632283	0.584314	0.470431	0.354515	0.549426	0.507033	0.368667	0.419549
-10	0.190800	No log	0.442809	0.618814	0.602504	0.480105	0.488294	0.547273	0.547273	0.467705	0.473905
-12	0.110000	No log	0.545819	0.609368	0.648119	0.576113	0.618060	0.554248	0.587529	0.549158	0.562636
-14	0.121000	No log	0.494983	0.614916	0.621884	0.536590	0.507023	0.565569	0.505184	0.447804	0.492197
-16	0.099100	No log	0.523077	0.635105	0.634436	0.565092	0.587960	0.576543	0.545489	0.513599	0.539346
-18	0.101300	No log	0.520401	0.631692	0.632353	0.563244	0.606020	0.582323	0.551679	0.522322	0.542783
-19	0.087100	No log	0.518395	0.631326	0.631802	0.560446	0.614047	0.580917	0.557001	0.531494	0.545970
-✅ SECTION 10: Model Training Execution completed in 1.7h 41m
-🕒 Total runtime so far: 5.0h 59m
+0	0.880600	No log	0.559980	0.525459	0.582237	0.535779	0.303216	0.473146	0.456775	0.299965	0.417872
+1	0.687000	No log	0.607963	0.575826	0.656571	0.583816	0.552833	0.526687	0.599516	0.521384	0.552600
+2	0.536900	No log	0.590097	0.591617	0.684023	0.569663	0.537519	0.538011	0.625820	0.512161	0.540912
+4	0.330500	No log	0.753956	0.764765	0.804791	0.779451	0.684533	0.639755	0.731589	0.663996	0.721723
+5	0.300200	No log	0.786115	0.793641	0.834455	0.811634	0.692190	0.682378	0.758920	0.696624	0.754129
+6	0.210100	No log	0.812149	0.852623	0.854728	0.852791	0.741194	0.699684	0.777890	0.726955	0.789873
+8	0.169300	No log	0.830526	0.868735	0.873295	0.863507	0.719755	0.724748	0.803721	0.735492	0.799499
+9	0.146600	No log	0.874426	0.899695	0.901687	0.900195	0.779990	0.748150	0.824007	0.776015	0.838105
+10	0.154900	No log	0.884635	0.910099	0.913227	0.909428	0.771822	0.753171	0.831685	0.776062	0.842745
+12	0.100400	No log	0.929556	0.944406	0.946456	0.944998	0.788157	0.770151	0.845038	0.791937	0.868467
+13	0.100800	No log	0.925472	0.942663	0.944863	0.941830	0.790710	0.773458	0.858210	0.795203	0.868516
+14	0.078400	No log	0.942828	0.955397	0.957689	0.955477	0.813680	0.787632	0.870368	0.814120	0.884798
+16	0.078900	No log	0.966309	0.972638	0.975004	0.973649	0.832057	0.804258	0.884420	0.830874	0.902261
+17	0.052200	No log	0.970904	0.975983	0.978408	0.977076	0.829505	0.802817	0.884637	0.828694	0.902885
+18	0.061400	No log	0.978050	0.981187	0.983675	0.982406	0.840225	0.809070	0.889399	0.836589	0.909497
+19	0.066300	No log	0.977029	0.980446	0.982931	0.981645	0.845329	0.812770	0.892117	0.840727	0.911186
+✅ SECTION 10: Model Training Execution completed in 3.4h 26m
+🕒 Total runtime so far: 3.5h 28m
 ------------------------------------------------------------
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
+model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
+0	mbert	bert-base-multilingual-cased	0.978571	0.980454	0.9841	0.982187	0.839796	0.812217	0.890444	0.838918	0.910552	7.0353	278.594	23.311
 
 === Detailed breakdowns for mbert ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.861650	0.400677	0.546995	886
-1	neutral	0.394541	0.793017	0.526926	401
-2	positive	0.592058	0.788462	0.676289	208
+0	negative	0.988453	0.966140	0.977169	886
+1	neutral	0.967195	0.986159	0.976585	867
+2	positive	0.985714	1.000000	0.992806	207
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.454031	0.737931	0.562172	435
-1	objective	0.316832	0.355556	0.335079	90
-2	partisan	0.834061	0.590722	0.691611	970
+0	non_polarized	0.718954	0.888530	0.794798	619
+1	objective	0.747368	1.000000	0.855422	213
+2	partisan	0.970330	0.782801	0.866536	1128
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan
-0	negative	886	0.676072	0.487769	0.457778	0.225352	0.780176
-1	neutral	401	0.578554	0.508907	0.678937	0.428571	0.419214
-2	positive	208	0.456731	0.421243	0.512315	0.333333	0.418079
+0	negative	886	0.942438	0.918067	0.842444	0.947368	0.964387
+1	neutral	867	0.705882	0.672244	0.759788	0.835322	0.421622
+2	positive	207	0.961353	0.969066	0.937500	1.000000	0.969697
 
 Sentiment performance within each Polarity slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_negative	f1_neutral	f1_positive
-0	partisan	970	0.536082	0.537635	0.604915	0.332750	0.675241
-1	non_polarized	435	0.581609	0.527456	0.191489	0.684211	0.706667
-2	objective	90	0.711111	0.647436	0.653846	0.788462	0.500000
+0	partisan	1128	0.984043	0.984485	0.987342	0.969805	0.996310
+1	non_polarized	619	0.969305	0.969439	0.930909	0.977408	1.000000
+2	objective	213	0.976526	0.949237	0.945455	0.985591	0.916667
 
 Saved detailed breakdowns to: ./runs_mbert_optimized/details
 
@@ -63,21 +68,21 @@ Saved detailed breakdowns to: ./runs_mbert_optimized/details
    ✓ Loading weights from: ./runs_mbert_optimized/mbert/model.safetensors
    Loading model from: ./runs_mbert_optimized/mbert
    ✓ Loading weights from: ./runs_mbert_optimized/mbert/model.safetensors
-   ✓ Validation logits shape: (1495, 3)
-   ✓ Test logits shape: (1495, 3)
+   ✓ Validation logits shape: (1959, 3)
+   ✓ Test logits shape: (1960, 3)
 🔍 Step 2: Searching for optimal bias vector (coordinate search)...
-   ✓ Optimal bias vector found (VAL macro-F1=0.574):
-      • non_polarized: -0.20
-      •     objective: +0.40
+   ✓ Optimal bias vector found (VAL macro-F1=0.842):
+      • non_polarized: +0.00
+      •     objective: -0.20
       •      partisan: +0.00
 📈 Step 3: Evaluating calibration impact on test set...
 
-   📊 TEST MACRO-F1: 0.530 → 0.572 (+0.041)
+   📊 TEST MACRO-F1: 0.839 → 0.840 (+0.001)
 
    Per-class breakdown:
-   📉 non_polarized: P=0.455 R=0.738 F1=0.563 (n=435)  →  P=0.610 R=0.510 F1=0.556 (-0.007)
-   📈     objective: P=0.317 R=0.356 F1=0.335 (n=90)  →  P=0.321 R=0.389 F1=0.352 (+0.017)
-   📈      partisan: P=0.835 R=0.593 F1=0.693 (n=970)  →  P=0.787 R=0.829 F1=0.807 (+0.114)
+   📈 non_polarized: P=0.719 R=0.889 F1=0.795 (n=619)  →  P=0.718 R=0.890 F1=0.795 (+0.000)
+   📈     objective: P=0.747 R=1.000 F1=0.855 (n=213)  →  P=0.752 R=0.995 F1=0.857 (+0.001)
+   📈      partisan: P=0.970 R=0.783 F1=0.867 (n=1128)  →  P=0.970 R=0.784 F1=0.867 (+0.001)
 
 ✅ Calibration complete! Bias vector saved to:
    ./runs_mbert_optimized/calibration_vector/mbert_bias_vector.json
@@ -85,23 +90,21 @@ Saved detailed breakdowns to: ./runs_mbert_optimized/details
 ======================================================================
 🎉 CALIBRATION FINISHED - All models optimized!
 
-
 [mbert] bert-base-multilingual-cased
 Token indices sequence length is longer than the specified maximum sequence length for this model (916 > 512). Running this sequence through the model will result in indexing errors
-Token length stats: {'mean': 109.174, 'p50': 97.0, 'p90': 179.0, 'p95': 194.0, 'p99': 226.02000000000044, 'max': 916}
-✅ SECTION 11+: Evaluation & Calibration completed in 28.5m 30s
-🕒 Total runtime so far: 5.5h 27m
+Token length stats: {'mean': 109.236, 'p50': 98.0, 'p90': 181.0, 'p95': 195.0, 'p99': 226.0, 'max': 916}
+✅ SECTION 11+: Evaluation & Calibration completed in 22.2s
+🕒 Total runtime so far: 3.5h 29m
 ------------------------------------------------------------
 
 ============================================================
 ⏱️  EXECUTION TIME SUMMARY
 ============================================================
-SECTION 2: Environment & Imports         : 8.9s
-SECTION 3: Configuration Setup           : 1.7h 40m
-SECTION 4: Data Loading & Preprocessing  : 14.0s
-SECTION 5-9: Model Architecture & Training Setup : 1.4m 23s
-SECTION 10: Model Training Execution     : 1.7h 41m
-SECTION 11+: Evaluation & Calibration    : 28.5m 30s
+SECTION 2: Environment & Imports         : 9.1s
+SECTION 3: Configuration Setup           : 19.7s
+SECTION 4: Data Loading & Preprocessing  : 14.6s
+SECTION 5-9: Model Architecture & Training Setup : 46.2s
+SECTION 10: Model Training Execution     : 3.4h 26m
+SECTION 11+: Evaluation & Calibration    : 22.2s
 ======================================== : ==========
-TOTAL EXECUTION TIME                     : 5.5h 27m
-============================================================
+TOTAL EXECUTION TIME                     : 3.5h 29m
