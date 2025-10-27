@@ -4419,3 +4419,62 @@ WARMUP_RATIO = 0.25  # INCREASE from 0.20
 5. **Stretch goal planning (>0.85).** Hitting 85% macro-F1 likely requires a larger architecture (XLM-R large), better data curation, and possibly a two-stage classifier (sentiment, then polarization conditioned on sentiment). Begin by logging hardest errors and planning additional data collection.
 
 **Next Update:** After evaluation-cleanup + weighting adjustments (Run #13 planning)
+
+---
+
+## 🏃 RUN #13 - POLARITY RECOVERY PASS (2025-10-22)
+
+**Configuration recap**
+- Applied Run #13 rebalance: longer warmup (0.24), softened polarization focal γ=2.8, boosted negative/partisan weights, trimmed neutral weight, objective weight 1.95.
+- Oversampling cap nudged up (max 4.5×), objective boost 1.7×, neutral boost dialed back to 0.8×. Head dropout raised to 0.24.
+- Output directory moved to `./runs_xlm_roberta_run13` but the Trainer still did not persist `pytorch_model.bin`, so calibration again reloaded an untrained checkpoint.
+
+### 🔢 Performance Snapshot
+
+| Metric                | Run #12 | Run #13 | Δ (pp) | Status |
+| --------------------- | ------- | ------- | ------ | ------ |
+| Overall Macro-F1      | 67.48%  | 67.80%  | +0.32  | ⬆️     |
+| Sentiment Macro-F1    | 73.41%  | 73.35%  | -0.06  | ➡️     |
+| Polarization Macro-F1 | 61.54%  | 62.25%  | +0.71  | ✅     |
+| Sentiment Accuracy    | 74.18%  | 73.78%  | -0.40  | 🔻     |
+| Polarization Accuracy | 66.07%  | 67.30%  | +1.23  | ✅     |
+
+### 🧭 Class-Level Movement (F1)
+
+| Class          | Run #12 | Run #13 | Δ (pp) | Notes |
+| -------------- | ------- | ------- | ------ | ----- |
+| Negative       | 73.98%  | 75.39%  | +1.41  | Precision lift from higher weight; recall up to 78.7%. |
+| Neutral        | 75.01%  | 72.34%  | -2.67  | Dip expected after reducing neutral weight/boost, still >72%. |
+| Positive       | 71.25%  | 72.31%  | +1.06  | Recovering; neutral bleed into positive less severe. |
+| Non-polarized  | 60.94%  | 61.06%  | +0.12  | Essentially flat. |
+| Objective      | 50.71%  | 50.97%  | +0.26  | Tiny gain; still plateaued ~51%. |
+| Partisan       | 72.97%  | 74.73%  | +1.76  | Precision/recall both improved; main target succeeded. |
+
+### ✅ What Improved
+
+1. **Partisan precision recovered.** Partisan F1 climbed +1.76 pp, returning above 74%. Neutral-sentiment slice partisan F1 ticked up to 0.419 (was 0.371).
+2. **Negative class steadier.** Negative F1 +1.4 pp with recall ~79%; fewer false neutral predictions thanks to weight adjustment.
+3. **Polarization macro-F1 back over 62%.** The focal gamma reduction + weighting tweaks lifted polarization F1 by +0.71 pp.
+
+### ⚠️ Remaining Issues
+
+1. **Neutral F1 regressed.** Dropped 2.7 pp; neutral recall slipped to 70.2%. Need to regain some of the neutral balance without undoing partisan gains.
+2. **Objective still flat at ~51% F1.** Extra weight/boost barely moved the needle. Requires targeted augmentation or specialized training (see Run #12 notes).
+3. **Calibration still broken.** Trainer again failed to save `pytorch_model.bin` into `runs_xlm_roberta_run13/xlm_roberta`, so the calibration step used an untrained model. Stored bias vector (0.377 macro-F1) is invalid until we persist weights.
+4. **Sentiment accuracy -0.4 pp.** Macro-F1 held, but accuracy dipped due to neutral confusion; monitor to ensure this doesn’t widen.
+
+### 🔬 Diagnostics & Hypotheses
+
+- **Neutral vs partisan trade-off persists.** Even with reduced neutral weight, the neutral slice macro-F1 is only 0.518 (non-pol 0.619, objective 0.515, partisan 0.419). Need richer neutral-partisan boundary examples.
+- **Oversampling cap increase helped without destabilizing training.** Max multiplier ~5.6×; enough to lift partisan recall without reintroducing variance.
+- **Model persistence issue.** Check Trainer `training_args.output_dir` vs `OUT_DIR`; ensure `save_strategy="epoch"` or call `trainer.save_model()` after training so calibration can load actual weights.
+
+### 🚀 Recommendations
+
+1. **Fix checkpoint saving.** Add `save_strategy="epoch"` (or `trainer.save_model()` right after training) so `pytorch_model.bin` exists for calibration/ensembling.
+2. **Blend neutral weight slightly upward (e.g., 1.20) or add neutral-focused contrastive augmentation** to regain the lost ~2-3 pp while keeping partisan weight ≥1.05.
+3. **Objective booster plan:** incorporate curated objective vs partisan examples or an auxiliary objective head to push beyond 52% F1.
+4. **Re-evaluate focal gamma after checkpoint fix.** Once weights persist, rerun calibration with real logits; adjust bias search using true model outputs.
+5. **Stretch path (>0.85 macro-F1) still requires bigger changes** (larger backbone or cascaded heads plus better data); continue logging hardest errors each run.
+
+**Next Update:** After checkpoint fix + neutral rebalance experiment (Run #14 planning)
