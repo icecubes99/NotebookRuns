@@ -17,10 +17,22 @@ pipi(
     "matplotlib==3.9.2",
     "transformers==4.44.2",
     "accelerate==0.34.2",
+    "bitsandbytes",
 )
 
 import numpy as np
 import torch, transformers, pandas as pd
+# Speed/compat env – reduce fragmentation and disable W&B
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["WANDB_DISABLED"] = "true"
+
+# Enable TF32 on Ampere+ (big win with minimal accuracy impact)
+if torch.cuda.is_available():
+    try:
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+    except Exception:
+        pass
 print("CUDA:", torch.cuda.is_available())
 ```
 
@@ -49,7 +61,7 @@ POL_COL   = "Final Polarization"
 
 # Model
 MODEL_NAME = "google/rembert"
-MAX_LENGTH = 320
+MAX_LENGTH = 256  # reduce seq length to cut memory/compute (~0.64x attention cost)
 USE_GRADIENT_CHECKPOINTING = True
 
 # Train
@@ -63,7 +75,7 @@ EARLY_STOP_PATIENCE = 8
 MAX_GRAD_NORM = 0.5
 
 # Heads / pooling (kept simple; mirrors your Run 16)
-HEAD_HIDDEN = 896
+HEAD_HIDDEN = 768  # lighten heads to reduce optimizer state and memory
 HEAD_LAYERS = 3
 HEAD_DROPOUT = 0.28
 REP_POOLING = "last4_mean"
@@ -277,6 +289,36 @@ class MTTrainer(Trainer):
 num_sent, num_pol = int(df[SENT_COL].nunique()), int(df[POL_COL].nunique())
 model = MultiTaskModel(MODEL_NAME, num_sent=num_sent, num_pol=num_pol)
 
+# Save memory and speed: avoid caching past key/values during training
+try:
+    model.encoder.config.use_cache = False
+except Exception:
+    pass
+
+# Optionally freeze embeddings + first 4 encoder layers to reduce optimizer state
+try:
+    for n, p in model.encoder.named_parameters():
+        if n.startswith("embeddings."):
+            p.requires_grad = False
+        elif ".layer." in n:
+            # Handle patterns like encoder.layer.<idx>.
+            try:
+                idx = int(n.split(".layer.")[1].split(".")[0])
+                if idx < 4:
+                    p.requires_grad = False
+            except Exception:
+                pass
+        elif ".layers." in n:
+            # Handle patterns like encoder.layers.<idx>.
+            try:
+                idx = int(n.split(".layers.")[1].split(".")[0])
+                if idx < 4:
+                    p.requires_grad = False
+            except Exception:
+                pass
+except Exception:
+    pass
+
 # LLRD param groups
 if USE_LLRD:
     n_layers = model.encoder.config.num_hidden_layers
@@ -294,6 +336,12 @@ if USE_LLRD:
 else:
     optim_params = model.parameters()
 
+# Decide BF16 support safely (Ampere+)
+try:
+    BF16_FLAG = bool(torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 8)
+except Exception:
+    BF16_FLAG = False
+
 args = TrainingArguments(
     output_dir=os.path.join(OUT_DIR, "rembert"),
     num_train_epochs=EPOCHS,
@@ -305,13 +353,18 @@ args = TrainingArguments(
     logging_steps=100,
     eval_strategy="epoch",
     save_strategy="epoch",
+    save_safetensors=False,  # avoid safetensors non-contiguous weight error
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     greater_is_better=False,
     fp16=torch.cuda.is_available(),
+    bf16=BF16_FLAG,
     gradient_accumulation_steps=GRAD_ACCUM_STEPS,
     max_grad_norm=MAX_GRAD_NORM,
     report_to="none",
+    optim="adamw_bnb_8bit",              # 8-bit optimizer to shrink optimizer states
+    dataloader_num_workers=2,
+    dataloader_pin_memory=True,
 )
 
 trainer = MTTrainer(
