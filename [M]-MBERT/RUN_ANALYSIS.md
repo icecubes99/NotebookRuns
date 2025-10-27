@@ -8,6 +8,84 @@
 
 ---
 
+# mBERT RUN #15 — AUGMENTED TRAINING ANALYSIS
+
+Date: 2025-10-26
+
+Status: NEW BASELINE WITH AUGMENTED TRAINING
+
+- Data: Uses augmented CSV appended to train only (no leakage by design).
+- Config highlights: MAX_LENGTH=320, EPOCHS=20, BATCH_SIZE=12, LR=2.5e-5, focal loss (2.5/3.5), R-Drop (alpha=0.6, warmup=2), LLRD (0.90), pooling=last4_mean, HEAD_HIDDEN=768, HEAD_LAYERS=3, HEAD_DROPOUT=0.25, task weights (sent=1.0, pol=1.4), seed via transformers.set_seed(42).
+- Oversampling: Disabled for objective/neutral when augmentation is ON (multipliers forced to 1.0). Matches run log showing “Objective boosted samples: 0; Neutral boosted samples: 0”.
+
+Executive Summary
+
+- Overall Macro-F1 (avg of Sentiment and Polarization): 0.9106 (test) [run-data.md:33].
+- Sentiment (test): F1=0.9822, Acc=0.9786, Prec=0.9805, Rec=0.9841 [M]-MBERT/run-data.md:31.
+- Polarization (test): F1=0.8389, Acc=0.8398, Prec=0.8122, Rec=0.8904 [M]-MBERT/run-data.md:31.
+- Calibration: Minimal net change on polarization (+0.001 Macro-F1), bias vector saved (objective −0.20) [M]-MBERT/run-data.md:63.
+- Training time: ~3h 26m (Section 10), total ~3h 29m [M]-MBERT/run-data.md:86.
+
+Configuration Details
+
+- MAX_LENGTH=320; raised from 224 to reduce truncation. Token stats: p95≈195, p99≈226, max=916 → 320 is justified; some outliers remain [M]-MBERT/run-data.md:80.
+- EPOCHS=20; BATCH_SIZE=12 (effective accum > previous due to longer sequences) [M]-MBERT/model-mdver.md:310,312.
+- LR=2.5e-5; WARMUP_RATIO=0.20; EARLY_STOP_PATIENCE=8; MAX_GRAD_NORM=0.5 [M]-MBERT/model-mdver.md:313,315,316,332.
+- Heads: HEAD_HIDDEN=768, HEAD_LAYERS=3, HEAD_DROPOUT=0.25, REP_POOLING="last4_mean" [M]-MBERT/model-mdver.md:378-381.
+- Loss/task: FOCAL_GAMMA_SENTIMENT=2.5, FOCAL_GAMMA_POLARITY=3.5, TASK_LOSS_WEIGHTS={sentiment:1.0, polarization:1.4}, R-Drop alpha=0.6 (warmup=2), LLRD=0.90 [M]-MBERT/model-mdver.md:322-329,393-399.
+- Augmented training: USE_AUGMENTED_TRAIN=True; AUG_CSV_PATH set; if augmentation present, set OBJECTIVE_BOOST_MULT=1.0 and NEUTRAL_BOOST_MULT=1.0 (no oversampling) [M]-MBERT/model-mdver.md:499-512,554-556.
+
+Results (Test)
+
+- Sentiment per class [M]-MBERT/run-data.md:40:
+  - Negative: P=0.988, R=0.966, F1=0.977 (n=886)
+  - Neutral: P=0.967, R=0.986, F1=0.977 (n=867)
+  - Positive: P=0.986, R=1.000, F1=0.993 (n=207)
+- Polarization per class [M]-MBERT/run-data.md:45:
+  - Non-polarized: P=0.719, R=0.889, F1=0.795 (n=619)
+  - Objective: P=0.747, R=1.000, F1=0.855 (n=213)
+  - Partisan: P=0.970, R=0.783, F1=0.867 (n=1128)
+- Slices — Polarity within Sentiment [M]-MBERT/run-data.md:52:
+  - Negative slice: Macro-F1=0.918 (n=886)
+  - Neutral slice: Macro-F1=0.672 (n=867) → weakest slice for polarization
+  - Positive slice: Macro-F1=0.969 (n=207)
+
+Calibration Impact
+
+- Bias vector (VAL-optimal): non_polarized +0.00; objective −0.20; partisan +0.00 [M]-MBERT/run-data.md:61-66.
+- Polarization Macro-F1: 0.839 → 0.840 (+0.001); per-class changes ~0.000–0.002 [M]-MBERT/run-data.md:69-77.
+- Conclusion: Keep calibration code path working, but use raw logits for production (no material benefit here).
+
+Interpretation
+
+- Augmented training (without oversampling) delivered the strongest objective performance to date (F1≈0.855) with recall=1.0; precision is the limiter (0.747).
+- Sentiment is near ceiling across classes (macro F1≈0.982). Gains likely from more training signal and longer context (MAX_LENGTH=320).
+- Non-polarized precision (0.719) is the main bottleneck on polarization; partisan remains strong (F1≈0.867) but recall (0.783) trails precision.
+- Test support counts (n=1960 total) indicate a larger test set than earlier baselines; consistent with a larger base CSV and/or updated labeling distribution.
+
+Quality Checks and Risks
+
+- Data leakage: Code appends augmentation only to TRAIN after the split; nonetheless, given unusually high sentiment metrics, verify no overlap between TRAIN and VAL/TEST by hashing title+text pairs prior to split.
+- Split sanity: Current two-stage split (70/15/15 stratified on joint labels) is correct [M]-MBERT/model-mdver.md:545-551. Confirm base CSV (not the augmented CSV) is used for splitting [M]-MBERT/model-mdver.md:265-266.
+- Token length outliers: p99≈226, max=916; MAX_LENGTH=320 is adequate. Keep truncation consistent in calibrator and trainer.
+
+Action Items
+
+- Lock this as the Augmented-Training baseline config (MAX_LENGTH=320; oversampling off; seed fixed).
+- Improve non-polarized precision: consider mild class-weight adjustment for non_polarized and/or threshold tuning on polarization head.
+- Confirm no leakage by de-duplicating rows and asserting no title+text overlap across splits.
+- Efficiency probe: try MAX_LENGTH=256 ablation to test if ~same performance with faster training.
+- Use raw logits for production (calibration neutral); keep calibration artifacts saved for reproducibility.
+
+Run Artifacts
+
+- Summary and per-class CSVs saved under: ./runs_mbert_optimized/ (details subdir) [M]-MBERT/model-mdver.md:1548; [M]-MBERT/run-data.md:78.
+- Calibration bias vector: ./runs_mbert_optimized/calibration_vector/mbert_bias_vector.json [M]-MBERT/run-data.md:79.
+
+End of Run #15 (Augmented Training) analysis.
+
+---
+
 ## 📈 DETAILED PERFORMANCE METRICS
 
 ### **Overall Performance**

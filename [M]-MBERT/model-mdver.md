@@ -262,8 +262,8 @@ device
 
 # ===== Section 3 — Config (pooling + R-Drop + LLRD) =====
 
-data_path = '/content/adjudications_2025-10-22.csv'
-CSV_PATH = '/content/adjudications_2025-10-22.csv'
+data_path = '/content/augmented_adjudications_2025-10-22.csv'
+CSV_PATH = '/content/augmented_adjudications_2025-10-22.csv'
 
 
 TITLE_COL = "Title"
@@ -400,6 +400,13 @@ LLRD_DECAY = 0.90            # ✅ R9 PROVEN (from R4)
 HEAD_LR_MULT = 3.0           # ✅ R9 PROVEN (from R4)
 
 os.makedirs(OUT_DIR, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# RUN #16 OVERRIDES: modest head capacity bump (+16.7%)
+# Keep architecture simple; change only head size and dropout.
+HEAD_HIDDEN = 896
+HEAD_DROPOUT = 0.28
+# ---------------------------------------------------------------------------
 
 # ============================================================================
 # CONFIGURATION SUMMARY
