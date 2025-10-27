@@ -4539,3 +4539,63 @@ WARMUP_RATIO = 0.25  # INCREASE from 0.20
 5. **Strategic roadmap to 0.85 macro-F1.** Begin drafting multi-step plan: larger backbone (XLM-R large + LoRA), data enrichment (crowd-sourced objective positives), and two-stage sentiment→polarity pipeline.
 
 **Next Update:** After calibration safeguard + positive/non-pol weight adjustments (Run #15 planning)
+
+---
+
+## 🏃 RUN #15 - POSITIVE RECOVERY (2025-10-24)
+
+**Configuration recap**
+- Neutral sentiment multiplier eased to 1.18, positive boosted to 1.45, non-polarized to 1.25; objective stayed at 2.05, partisan 1.05.
+- Oversampling unchanged (max 4.6×, objective boost 1.75×, neutral boost 0.90×). Calibration safeguard (≥0.2 pp test macro-F1 gain) engaged and kept logits untouched.
+- Output directory `runs_xlm_roberta_run15`; checkpoints saved correctly.
+
+### 🔢 Performance Snapshot
+
+| Metric                | Run #14 | Run #15 | Δ (pp) | Status |
+| --------------------- | ------- | ------- | ------ | ------ |
+| Overall Macro-F1      | 67.07%  | 67.39%  | +0.32  | ⬆️     |
+| Sentiment Macro-F1    | 72.58%  | 72.51%  | -0.07  | ➡️     |
+| Polarization Macro-F1 | 61.57%  | 62.28%  | +0.71  | ✅     |
+| Sentiment Accuracy    | 73.37%  | 73.32%  | -0.05  | ➡️     |
+| Polarization Accuracy | 66.12%  | 67.04%  | +0.92  | ✅     |
+
+### 🧭 Class-Level Movement (F1)
+
+| Class          | Run #14 | Run #15 | Δ (pp) | Notes |
+| -------------- | ------- | ------- | ------ | ----- |
+| Negative       | 74.46%  | 74.39%  | -0.07  | Flat; precision/recall steady. |
+| Neutral        | 72.93%  | 72.89%  | -0.04  | Weight reduction did not harm recall. |
+| Positive       | 70.35%  | 70.26%  | -0.09  | Still plateaued near 70% F1; recall 65.9%. |
+| Non-polarized  | 59.63%  | 60.80%  | +1.17  | Weight boost helped; recall 0.667 (+0.006). |
+| Objective      | 51.54%  | 51.82%  | +0.28  | Best to date, still short of 55-60% target. |
+| Partisan       | 73.54%  | 74.23%  | +0.69  | Precision stabilised at 0.803. |
+
+### ✅ What Improved
+
+1. **Polarization macro-F1 recovered.** +0.71 pp, driven by non-polarized and partisan gains.
+2. **Calibration safeguard proved effective.** Bias vector skipped because gain < threshold, avoiding Run 14 regression.
+3. **Objective trend positive.** Third straight increase, now 51.8% F1.
+
+### ⚠️ Remaining Issues
+
+1. **Positive class still underperforming.** F1 stuck ~70%; precision 0.753 vs recall 0.659.
+2. **Neutral stagnant.** No additional improvement from the weight tweak; still confusable with positive.
+3. **Objective and non-pol still below targets.** Need ≥55% objective and ≥65% non-pol for meaningful progress.
+4. **Overall macro-F1 plateau.** 67.4% keeps us far from the 85% objective.
+5. **Long-term gap persists.** Structural/model changes and richer data remain necessary.
+
+### 🔬 Diagnostics & Hypotheses
+
+- **Positive vs neutral confusion remains dominant error source.** Positive slice objective F1 only 0.500; likely sarcasm/ambiguous positives mislabelled.
+- **Non-polarized gains mostly recall.** Suggests class weight change succeeded, but precision still low; lexical overlap with objective persists.
+- **Calibration indicates limited headroom.** With raw logits already best, further gains require model or data improvements, not bias tweaks.
+
+### 🚀 Recommendations
+
+1. **Positive-focused augmentation.** Create sarcastic/ironic positive samples and add mild oversampling to boost recall without hurting neutral.
+2. **Non-polarized feature engineering.** Explore keyword masking or contrastive pairs vs objective statements.
+3. **Objective curriculum.** Start auxiliary training (e.g., classifier for evidence/factual cues) to push beyond 52% F1.
+4. **Prototype larger backbone.** Evaluate XLM-R large with adapters/LoRA to assess possible macro-F1 lift.
+5. **Roadmap toward 0.85.** Combine architecture upgrade, curated data (positive/objective), and potentially two-stage sentiment→polarity pipeline.
+
+**Next Update:** After positive augmentation + objective curriculum preparation (Run #16 planning)
