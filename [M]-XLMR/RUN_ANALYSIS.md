@@ -4361,3 +4361,61 @@ WARMUP_RATIO = 0.25  # INCREASE from 0.20
 
 **Last Updated:** After Run #11 completion  
 **Next Update:** After Run #12 optimization enhancement
+
+---
+
+## 🏃 RUN #12 - AUGMENTED DATA + LIGHTER REBALANCING (2025-10-22)
+
+**Dataset update**
+- Augmented file `augmented_adjudications_2025-10-22.csv` ingested 13,063 rows (9,965 original + 3,098 synthetic). Objective coverage nearly doubled (588 → 1,423) and neutral more than doubled (2,677 → 5,775). Train/val/test split: 9,144 / 1,959 / 1,960.
+- Augmentation log reported 3,166 synthetic rows; 68 records were dropped during dedupe or preprocessing. Worth confirming we are not discarding high-quality objective samples.
+
+### 🔢 Performance Snapshot
+
+| Metric                 | Run #11 | Run #12 | Δ (pp) | Status |
+| ---------------------- | ------- | ------- | ------ | ------ |
+| Overall Macro-F1       | 68.36%  | 67.48%  | -0.88  | 🔻     |
+| Sentiment Macro-F1     | 70.50%  | 73.41%  | +2.91  | ✅     |
+| Polarization Macro-F1  | 66.22%  | 61.54%  | -4.68  | 🔴     |
+| Sentiment Accuracy     | 75.45%  | 74.18%  | -1.27  | 🔻     |
+| Polarization Accuracy  | 65.65%  | 66.07%  | +0.42  | ➡️     |
+
+### 🧭 Class-Level Movement (F1)
+
+| Class         | Run #11 | Run #12 | Δ (pp) | Notes |
+| ------------- | ------- | ------- | ------ | ----- |
+| Negative      | 83.05%  | 73.98%  | -9.07  | Major drop; model now under-calls negative vs neutral. |
+| Neutral       | 55.69%  | 75.01%  | +19.32 | Huge gain; augmentation delivered the intended lift. |
+| Positive      | 72.77%  | 71.25%  | -1.52  | Slight regression but still stable. |
+| Non-polarized | 64.85%  | 60.94%  | -3.91  | Lost recall after reducing weights/oversampling. |
+| Objective     | 50.28%  | 50.71%  | +0.43  | Essentially flat; still far from 60% target. |
+| Partisan      | 83.54%  | 72.97%  | -10.57 | Major collapse; partisan precision cratered with lighter weighting. |
+
+### ✅ What Worked
+
+1. **Neutral sentiment breakthrough.** Neutral F1 jumped +19.3 pp; recall 78.2% → 88.2%. Augmentation plus reduced oversampling solved the chronic neutral precision gap.
+2. **Objective class stabilized.** Objective F1 held at ~50% despite larger dataset, confirming that the smaller weight/boost did not reintroduce variance.
+3. **Runtime & convergence healthy.** Training remained smooth (18 epochs, ~2h). Oversampling min/max relaxed to 1.00-4.43, confirming the lighter rebalancing.
+
+### ⚠️ New Issues
+
+1. **Negative & partisan regressions.** Negative sentiment F1 fell -9.1 pp and partisan polarization -10.6 pp. Reduced class weights/boosts left the model over-predicting neutral/non-polarized classes, raising false negatives on partisan content.
+2. **Polarization task slipped.** Macro-F1 -4.68 pp; neutral-sentiment slice shows partisan F1 only 37.1%, indicating strong partisan↔neutral confusion.
+3. **Calibration using wrong checkpoint.** Evaluation reloaded `./runs_xlm_roberta_optimized/xlm_roberta` without Run #12 weights, yielding the bogus 0.164 macro-F1 trail. Needs cleanup before ensembling.
+4. **Augmentation bookkeeping gap.** 68 augmented records dropped between generation (3,166) and training (3,098). Verify dedupe/export steps so we do not lose vetted objective samples.
+
+### 🔬 Diagnostics & Hypotheses
+
+- **Neutral overflow:** Augmented rows (all neutral sentiment, mixed polarization) shifted the class prior; with weights capped at 8.0 and partisan weight 0.90, the model prefers neutral predictions even when partisan cues exist.
+- **Objective stuck at 50%:** Despite 835 objective augmented rows, the model still struggles. Likely needs targeted features (e.g., evidence markers) or curriculum focusing on objective vs partisan boundary.
+- **Slice analysis:** Neutral-sentiment slice polarity macro-F1 = 0.498 (non-pol 0.614, objective 0.509, partisan 0.371). Neutral text remains the hardest region; we should mine errors here for augmentation/contrastive pairs.
+
+### 🚀 Recommendations
+
+1. **Fix evaluation outputs.** Point `OUT_DIR` to a run-specific folder (e.g., `runs_xlm_roberta_run12/`) and rerun inference + calibration so stored logits/bias vectors match the trained weights.
+2. **Restore ballast for partisan/negative.** Consider nudging class weights back up (`partisan`: 0.90 → 1.05, `negative`: 1.05 → 1.15) or adding a modest oversampling cap (e.g., allow partisan boost 1.2x) to recover precision without undoing neutral gains.
+3. **Targeted neutral-partisan augmentation.** Generate contrastive pairs where neutral commentary is near partisan wording; combine with focal loss sweep (γ_pol 3.1 → 2.8) to stop over-penalizing confident partisan predictions.
+4. **Objective curriculum.** Build a small auxiliary dataset of objective vs partisan headlines and run a brief continued pre-training or knowledge distillation pass; aim for ≥60% objective F1 before next full run.
+5. **Stretch goal planning (>0.85).** Hitting 85% macro-F1 likely requires a larger architecture (XLM-R large), better data curation, and possibly a two-stage classifier (sentiment, then polarization conditioned on sentiment). Begin by logging hardest errors and planning additional data collection.
+
+**Next Update:** After evaluation-cleanup + weighting adjustments (Run #13 planning)

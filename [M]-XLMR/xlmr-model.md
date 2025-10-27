@@ -272,27 +272,26 @@ MODEL_CONFIGS = {
 MODELS_TO_RUN = ["xlm_roberta"]  # ← TRAINING ONLY XLM-RoBERTa
 
 # ============================================================================
-# CORE TRAINING - RUN #12 DATA AUGMENTATION BOOST (72-74% MACRO-F1 TARGET)
-# Run #11 Result: 68.36% macro-F1 (MIXED: Objective +6.97%, Positive -3.85%, no net gain)
-# Run #12 Goal: Leverage augmented data for significant improvement
-# Strategy: Augmented dataset (13,063 samples, +31%) + optimized config for more data
-# Key Changes: Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)
-# Expected training time: ~75 minutes (18 epochs, early stop 6, more data)
+# CORE TRAINING - RUN #13 POLARITY RECOVERY (TARGET ≥72% MACRO-F1)
+# Run #12 Result: 67.48% macro-F1 (Neutral breakthrough, partisan/negative regression)
+# Run #13 Goal: Restore partisan/negative precision while keeping neutral gains
+# Strategy: Rebalance class weights/oversampling, soften focal gamma, longer warmup
+# Dataset: augmented_adjudications_2025-10-22.csv (13,063 rows; same split 9,144 / 1,959 / 1,960)
 # ============================================================================
 MAX_LENGTH = 224
 EPOCHS = 18                # ⬇️ REDUCED (Run #11: 20 → 18) - Faster convergence with more data!
 BATCH_SIZE = 20           # ⬆️ INCREASED (Run #11: 16 → 20) - More stable with larger dataset!
 LR = 3.0e-5              # ✅ KEEP (proven optimal!)
 WEIGHT_DECAY = 0.04      # ✅ KEEP (proven optimal!)
-WARMUP_RATIO = 0.22      # ⬆️ SLIGHTLY INCREASED (Run #11: 0.20 → 0.22) - Better for larger dataset
+WARMUP_RATIO = 0.24      # ⬆️ SLIGHTLY LONGER (0.22 → 0.24) - smoother ramp for reweighted classes
 EARLY_STOP_PATIENCE = 6  # ✅ KEEP (proven optimal!)
 GRAD_ACCUM_STEPS = 3     # Effective batch: 60
 
-# Per-task loss - RUN #12 ADJUSTED FOR AUGMENTED DATA
+# Per-task loss - RUN #13 ADJUSTMENTS
 USE_FOCAL_SENTIMENT = True
 USE_FOCAL_POLARITY  = True
 FOCAL_GAMMA_SENTIMENT = 2.5   # ✅ KEEP (proven optimal)
-FOCAL_GAMMA_POLARITY = 3.1    # ⬇️ REDUCED (Run #11: 3.3 → 3.1) - Objective class more balanced now!
+FOCAL_GAMMA_POLARITY = 2.8    # ⬇️ SOFTENED (3.1 → 2.8) - reduce over-penalizing confident partisan preds
 LABEL_SMOOTH_SENTIMENT = 0.10 # ✅ KEEP (proven optimal)
 LABEL_SMOOTH_POLARITY = 0.08  # ✅ KEEP (proven optimal)
 
@@ -308,21 +307,21 @@ LR_SCHEDULER_TYPE = "cosine"  # 🔥 Cosine annealing with warmup for smooth dec
 NUM_CYCLES = 0.5              # ✅ KEEP (proven optimal - smooth convergence!)
 
 # ============================================================================
-# CLASS WEIGHTS - RUN #12 ADJUSTED FOR AUGMENTED DATA
-# Augmentation Results: Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)
-# Run #12 Goal: Reduce weights for augmented classes, balance the rest
-# Strategy: Much less aggressive weighting (more data = less need for extreme weights)
+# CLASS WEIGHTS - RUN #13 REBALANCING
+# Augmentation Coverage: Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)
+# Run #13 Goal: Restore partisan/negative precision without sacrificing neutral F1
+# Strategy: Boost minority precision classes, lighten neutral to avoid dominance
 # ============================================================================
 CLASS_WEIGHT_MULT = {
     "sentiment": {
-        "negative": 1.05,    # ✅ KEEP (already balanced)
-        "neutral":  1.30,    # ⬇️ REDUCED (Run #11: 1.70 → 1.30) - Now have 5,775 samples!
-        "positive": 1.40     # ⬆️ INCREASED (Run #11: 1.35 → 1.40) - Still smallest class (1,383)
+        "negative": 1.15,    # ⬆️ BOOSTED (1.05 → 1.15) - recover negative precision lost in Run #12
+        "neutral":  1.15,    # ⬇️ LIGHTENED (1.30 → 1.15) - prevent neutral from dominating
+        "positive": 1.40     # ✅ KEEP - still the smallest class (1,383)
     },
     "polarization": {
-        "non_polarized": 1.15,  # ⬇️ REDUCED (Run #11: 1.25 → 1.15) - Now have 4,125 samples
-        "objective":     1.80,  # ⬇️ REDUCED (Run #11: 2.80 → 1.80) - Now have 1,423 samples!
-        "partisan":      0.90   # ✅ KEEP (already optimal)
+        "non_polarized": 1.20,  # ⬆️ SLIGHT (1.15 → 1.20) - keep macro-F1 balanced
+        "objective":     1.95,  # ⬆️ SLIGHT (1.80 → 1.95) - push toward 60% F1 goal
+        "partisan":      1.05   # ⬆️ RECOVERY (0.90 → 1.05) - restore partisan precision
     }
 }
 
@@ -330,33 +329,32 @@ CLASS_WEIGHT_MULT = {
 MAX_CLASS_WEIGHT = 8.0  # ⬇️ REDUCED (Run #11: 12.0 → 8.0) - Less extreme weights needed
 
 # ============================================================================
-# OVERSAMPLING - RUN #12 REDUCED FOR AUGMENTED DATA
-# Augmentation Results: Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)
-# Run #12 Goal: Much less aggressive oversampling (more natural distribution)
-# Strategy: Minimal boosting (augmented data provides natural balance)
+# OVERSAMPLING - RUN #13 CONTROLLED BOOSTS
+# Still using augmented set; keep objective steady while trimming neutral repeats
+# Strategy: Slightly higher cap, small objective boost, neutral dialed back
 # ============================================================================
 USE_OVERSAMPLING = True
 USE_JOINT_OVERSAMPLING = True
 USE_SMART_OVERSAMPLING = True
 JOINT_ALPHA = 0.65              # ✅ KEEP (proven optimal)
-JOINT_OVERSAMPLING_MAX_MULT = 4.0  # ⬇️ REDUCED (Run #11: 6.0 → 4.0) - Less aggressive!
-OBJECTIVE_BOOST_MULT = 1.5      # ⬇️ REDUCED (Run #11: 3.5 → 1.5) - Now have 1,423 samples!
-NEUTRAL_BOOST_MULT = 1.0        # ⬆️ INCREASED (Run #11: 0.3 → 1.0) - Natural distribution now!
+JOINT_OVERSAMPLING_MAX_MULT = 4.5  # ⬆️ SLIGHT (4.0 → 4.5) - allow mild partisan/objective oversampling
+OBJECTIVE_BOOST_MULT = 1.7      # ⬆️ SLIGHT (1.5 → 1.7) - keep objective stable without extremes
+NEUTRAL_BOOST_MULT = 0.8        # ⬇️ REDUCED (1.0 → 0.8) - counteract neutral over-representation
 
 # ============================================================================
-# ARCHITECTURE - RUN #12 REVERT + ADJUST FOR AUGMENTED DATA
+# ARCHITECTURE - RUN #13 (STILL 768 HIDDEN, MORE DROPOUT)
 # Run #11: HEAD_HIDDEN 1024 showed trade-offs (objective +6.97%, positive -3.85%)
-# Run #12: Revert to 768 (proven optimal) + adjust dropout for more data
-# Strategy: Proven architecture + slight dropout increase to prevent overfitting
+# Run #12: Reverted to 768 but partisan precision collapsed
+# Run #13: Keep 768 (best overall) + add extra dropout to stabilize minority classes
 # ============================================================================
 HEAD_HIDDEN = 768            # 🔄 REVERTED (Run #11: 1024 → 768) - 1024 had no net benefit!
-HEAD_DROPOUT = 0.22          # ⬆️ INCREASED (Run #11: 0.20 → 0.22) - Prevent overfitting on augmented data
+HEAD_DROPOUT = 0.24          # ⬆️ INCREASED (0.22 → 0.24) - extra regularization for partisan recovery
 REP_POOLING = "last4_mean"   # ✅ KEEP (proven optimal)
 HEAD_LAYERS = 3              # ✅ KEEP (proven optimal)
 
 # ============================================================================
-# REGULARIZATION - RUN #12 ADJUSTED FOR AUGMENTED DATA
-# More data = slightly less aggressive regularization needed
+# REGULARIZATION - RUN #13
+# More data still available; maintain moderate R-Drop and layer decay
 # ============================================================================
 USE_RDROP = True
 RDROP_ALPHA = 0.6            # ⬇️ REDUCED (Run #11: 0.7 → 0.6) - Less regularization with more data
@@ -367,17 +365,17 @@ USE_LLRD = True
 LLRD_DECAY = 0.88            # ✅ KEEP (proven optimal)
 HEAD_LR_MULT = 3.5           # ✅ KEEP (proven optimal)
 
-OUT_DIR = "./runs_xlm_roberta_optimized"  # ← Optimized output directory
+OUT_DIR = "./runs_xlm_roberta_run13"  # ← Run-specific output directory to avoid calibration conflicts
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ============================================================================
-# CONFIGURATION SUMMARY - RUN #12 DATA AUGMENTATION BOOST
+# CONFIGURATION SUMMARY - RUN #13 POLARITY RECOVERY
 # ============================================================================
-print("📊 XLM-RoBERTa RUN #12 DATA AUGMENTATION BOOST - TARGET: 72-74% MACRO-F1")
-print("⚠️ Run #11 Result: 68.36% macro-F1 (Objective +6.97%, Positive -3.85%, no net gain)")
-print("✅ Augmentation Complete: 13,063 samples (+31%): Objective 588→1,423 (+142%), Neutral 2,677→5,775 (+116%)")
-print("🔧 Run #12 Strategy: Leverage augmented data with optimized config")
-print("🎯 Focus: Weak classes now have enough data for stable learning!")
+print("📊 XLM-RoBERTa RUN #13 POLARITY RECOVERY - TARGET: ≥72% MACRO-F1")
+print("⚠️ Run #12 Result: 67.48% macro-F1 (Neutral breakthrough, partisan/negative regression)")
+print("✅ Dataset: 13,063 samples (+31%): Objective 588→1,423, Neutral 2,677→5,775")
+print("🔧 Run #13 Strategy: Rebalance weights/oversampling, soften focal gamma, longer warmup")
+print("🎯 Focus: Recover partisan & negative precision while keeping neutral >70% F1")
 print("="*70)
 print(f"📊 Training Settings:")
 print(f"   Epochs: {EPOCHS} | Batch: {BATCH_SIZE} | Grad Accum: {GRAD_ACCUM_STEPS} (Effective: {BATCH_SIZE*GRAD_ACCUM_STEPS})")
@@ -1450,4 +1448,3 @@ for key in MODELS_TO_RUN:
 timer.end_section("SECTION 11+: Evaluation & Calibration")
 timer.get_summary()
 ```
-
