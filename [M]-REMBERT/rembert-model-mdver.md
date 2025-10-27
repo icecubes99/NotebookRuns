@@ -336,11 +336,12 @@ if USE_LLRD:
 else:
     optim_params = model.parameters()
 
-# Decide BF16 support safely (Ampere+)
+# Decide precision flags safely (mutually exclusive)
 try:
     BF16_FLAG = bool(torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 8)
 except Exception:
     BF16_FLAG = False
+FP16_FLAG = bool(torch.cuda.is_available() and not BF16_FLAG)
 
 args = TrainingArguments(
     output_dir=os.path.join(OUT_DIR, "rembert"),
@@ -357,7 +358,7 @@ args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     greater_is_better=False,
-    fp16=torch.cuda.is_available(),
+    fp16=FP16_FLAG,
     bf16=BF16_FLAG,
     gradient_accumulation_steps=GRAD_ACCUM_STEPS,
     max_grad_norm=MAX_GRAD_NORM,
@@ -389,11 +390,24 @@ print("Training complete.")
 # SECTION 7: EVALUATION (TEST) — QUICK REPORT
 # ============================================================================
 from sklearn.metrics import classification_report
+from transformers import DataCollatorWithPadding
 
 model.eval()
 
+# Use the same dynamic padding collator as training to handle variable-length batches
+collate = DataCollatorWithPadding(
+    tokenizer,
+    pad_to_multiple_of=8 if (FP16_FLAG or BF16_FLAG) else None,
+)
+
 def predict(ds):
-    loader = torch.utils.data.DataLoader(ds, batch_size=BATCH_SIZE)
+    loader = torch.utils.data.DataLoader(
+        ds,
+        batch_size=BATCH_SIZE,
+        collate_fn=collate,
+        pin_memory=True,
+        num_workers=2,
+    )
     logits_s, logits_p, lab_s, lab_p = [], [], [], []
     for batch in loader:
         for k in ["input_ids","attention_mask","token_type_ids"]:
