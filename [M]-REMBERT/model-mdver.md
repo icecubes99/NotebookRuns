@@ -257,7 +257,7 @@ device
 # SECTION 3
 
 ```python
-# 🤖 TRAINING ONLY: Rerembert (google/reRerembert)\n
+# 🤖 TRAINING ONLY: RemBERT (google/rembert)\n
 # Expected: ~35-40 min, 60-65% macro-F1\n
 
 # ===== Section 3 — Config (pooling + R-Drop + LLRD) =====
@@ -272,10 +272,10 @@ SENT_COL  = "Final Sentiment"
 POL_COL   = "Final Polarization"
 
 MODEL_CONFIGS = {
-    "Rerembert": {"name": "google/reRerembert", "desc": "Rerembert (104 langs)"},
+    "RemBERT": {"name": "google/rembert", "desc": "RemBERT (104 langs)"},
 }
-MODELS_TO_RUN = ["Rerembert"]  # ← TRAINING ONLY Rerembert
-OUT_DIR = "./runs_reRerembert_optimized"  # ← Separate output directory
+MODELS_TO_RUN = ["RemBERT"]  # ← TRAINING ONLY RemBERT
+OUT_DIR = "./runs_rembert_optimized"  # ← Separate output directory
 
 # ============================================================================
 # CORE TRAINING - RUN #10-13: SEED ENSEMBLE STRATEGY (4 SEEDS FOR +1-2% BOOST)
@@ -412,7 +412,7 @@ HEAD_DROPOUT = 0.28
 # CONFIGURATION SUMMARY
 # ============================================================================
 print("="*80)
-print(f"🎯 Rerembert TRAINING - RUN #15: SEQUENCE LENGTH OPTIMIZATION (SEED = {SEED})")
+print(f"🎯 RemBERT TRAINING - RUN #15: SEQUENCE LENGTH OPTIMIZATION (SEED = {SEED})")
 print("="*80)
 print(f"📊 Run History:")
 print(f"   R1→R8: 58.5%-61.99% (hyperparameter tuning)")
@@ -632,7 +632,7 @@ class TaglishDataset(Dataset):
         self.y_pol  = np.array(y_pol)
         self.tok = tokenizer
         self.max_length = max_length
-        # Rerembert has token_type_ids; XLM-R/ReRerembert don't, and that's fine.
+        # RemBERT has token_type_ids; XLM-R/rembert don't, and that's fine.
         self.use_token_type = "token_type_ids" in tokenizer.model_input_names
 
     def __len__(self):
