@@ -307,14 +307,14 @@ SEED = 42  # 🔥 Use best seed (42) proven in R9-R10
 # Research: Sequence length 320 achieved 71.7% F1 in NIH study (PMC9051848)
 # Expected: +1-3% from better context capture
 # ============================================================================
-MAX_LENGTH = 320            # ⬆️ RESEARCH-BACKED OPTIMAL (was 224, +43% more context!)
+MAX_LENGTH = 256            # ⬆️ RESEARCH-BACKED OPTIMAL (was 224, +43% more context!)
 EPOCHS = 20                 # ✅ RESTORE R9 PROVEN (R14's changes failed!)
 BATCH_SIZE = 12            # ⬇️ KEEP 12 (compensate for longer sequences)
 LR = 2.5e-5               # ✅ RESTORE R9 PROVEN (2.0e-5 in R14 was too conservative)
 WEIGHT_DECAY = 0.03       # ✅ RESTORE R9 PROVEN (R14's 0.04 was over-regularizing)
 WARMUP_RATIO = 0.20       # ✅ RESTORE R9 PROVEN (R14's 0.25 was unnecessary)
 EARLY_STOP_PATIENCE = 8   # ✅ RESTORE R9 PROVEN (R14's 10 allowed overfitting)
-GRAD_ACCUM_STEPS = 4      # ⬆️ KEEP 4 (maintain effective batch 48 for longer sequences)
+GRAD_ACCUM_STEPS = 3      # ⬆️ KEEP 4 (maintain effective batch 48 for longer sequences)
 
 # Per-task loss - RUN #10-13: R9 CONFIGURATION (PROVEN OPTIMAL)
 USE_FOCAL_SENTIMENT = True
@@ -1031,18 +1031,6 @@ class MultiTaskTrainer(Trainer):
     def __init__(self, *args, class_weights=None, task_weights=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.class_weights = class_weights or {}
-    # Force .bin saving (avoid safetensors non-contiguous tensor errors)
-    def save_model(self, output_dir: str = None, _internal_call: bool = False):
-        output_dir = output_dir or self.args.output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        try:
-            self.model.save_pretrained(output_dir, safe_serialization=False)
-        except TypeError:
-            # Older/variant signatures: fall back to default save_pretrained
-            self.model.save_pretrained(output_dir)
-        if getattr(self, 'tokenizer', None) is not None:
-            self.tokenizer.save_pretrained(output_dir)
-
         self.task_weights  = task_weights or {"sentiment": 1.0, "polarization": 1.0}
         self._custom_train_sampler = None
 
@@ -1902,4 +1890,5 @@ for key in MODELS_TO_RUN:
 timer.end_section("SECTION 11+: Evaluation & Calibration")
 timer.get_summary()
 ```
+
 
