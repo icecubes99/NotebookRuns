@@ -363,11 +363,11 @@ MAX_CLASS_WEIGHT = 10.0  # 🔥 INCREASED (was 6.0) - Allow stronger weighting f
 # ============================================================================
 USE_OVERSAMPLING = True
 USE_JOINT_OVERSAMPLING = True
-USE_SMART_OVERSAMPLING = True
+USE_SMART_OVERSAMPLING = False
 JOINT_ALPHA = 0.70              # ✅ RESTORE R4 (was effective)
-JOINT_OVERSAMPLING_MAX_MULT = 8.0  # ✅ RESTORE R4
-OBJECTIVE_BOOST_MULT = 8.5      # ✅ RESTORE R4 from 10.0 (10x destroyed non-polarized!)
-NEUTRAL_BOOST_MULT = 3.5        # ✅ RESTORE R4 from 3.0 (3x removed critical signal!)
+JOINT_OVERSAMPLING_MAX_MULT = 4.0  # ✅ RESTORE R4
+OBJECTIVE_BOOST_MULT = 1.0      # ✅ RESTORE R4 from 10.0 (10x destroyed non-polarized!)
+NEUTRAL_BOOST_MULT = 1.0        # ✅ RESTORE R4 from 3.0 (3x removed critical signal!)
 
 # ============================================================================
 # ARCHITECTURE - RUN #15: RESTORE R9 PROVEN SIMPLE DESIGN
@@ -1031,8 +1031,33 @@ class MultiTaskTrainer(Trainer):
     def __init__(self, *args, class_weights=None, task_weights=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.class_weights = class_weights or {}
+    # Force .bin saving (avoid safetensors non-contiguous tensor errors)
+    def save_model(self, output_dir: str = None, _internal_call: bool = False):
+        output_dir = output_dir or self.args.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+        try:
+            self.model.save_pretrained(output_dir, safe_serialization=False)
+        except TypeError:
+            # Older/variant signatures: fall back to default save_pretrained
+            self.model.save_pretrained(output_dir)
+        if getattr(self, 'tokenizer', None) is not None:
+            self.tokenizer.save_pretrained(output_dir)
+
         self.task_weights  = task_weights or {"sentiment": 1.0, "polarization": 1.0}
         self._custom_train_sampler = None
+
+    # Force .bin saving (avoid safetensors non-contiguous tensor errors)
+    def save_model(self, output_dir: str = None, _internal_call: bool = False):
+        output_dir = output_dir or self.args.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+        try:
+            self.model.save_pretrained(output_dir, safe_serialization=False)
+        except TypeError:
+            # Older/variant signatures: fall back to default save_pretrained
+            self.model.save_pretrained(output_dir)
+        if getattr(self, 'tokenizer', None) is not None:
+            self.tokenizer.save_pretrained(output_dir)
+
 
     # ----- LLRD optimizer -----
     def create_optimizer(self):
@@ -1293,7 +1318,8 @@ def train_eval_one_model(model_key: str,
         gradient_accumulation_steps=GRAD_ACCUM_STEPS,
         dataloader_pin_memory=True,          # Performance optimization
         max_grad_norm=MAX_GRAD_NORM,         # ✅ R4 EXACT (global gradient clipping restored)
-        label_smoothing_factor=0.0,          # We handle this in loss functions
+        label_smoothing_factor=0.0,          # We handle this in loss functions\n        save_safetensors=False,
+        save_safetensors=False,              # avoid safetensors non-contiguous weight error
         save_total_limit=5,                  # ✅ R4 EXACT
         prediction_loss_only=False           # Log all metrics
     )
@@ -1713,6 +1739,8 @@ def _get_pol_logits(model_key, titles, texts):
         output_dir=os.path.join(run_dir, "calib_tmp"),
         per_device_eval_batch_size=64,
         report_to="none"
+        report_to="none",
+        save_safetensors=False
     )
 
     dummy_trainer = MultiTaskTrainer(
