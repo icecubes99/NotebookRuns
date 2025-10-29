@@ -46,33 +46,33 @@ Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	RemBERT	google/rembert	0.996939	0.995287	0.99771	0.99649	0.920918	0.884095	0.940048	0.90781	0.95215	16.8042	116.637	9.759
+0	RemBERT	google/rembert	0.975420	0.978235	0.980156	0.979142	0.858210	0.832145	0.897850	0.857320	0.917231	16.8042	116.637	9.759
 
 
 === Detailed breakdowns for RemBERT ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.997743	0.997743	0.997743	886
-1	neutral	0.997688	0.995386	0.996536	867
-2	positive	0.990431	1.000000	0.995192	207
+0	negative	0.978562	0.973125	0.975836	886
+1	neutral	0.974820	0.981240	0.978020	867
+2	positive	0.981325	0.985507	0.983411	207
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.873457	0.914378	0.893449	619
-1	objective	0.796992	0.995305	0.885177	213
-2	partisan	0.981836	0.910461	0.944802	1128
+0	non_polarized	0.798234	0.871540	0.833256	619
+1	objective	0.782156	0.978873	0.869554	213
+2	partisan	0.916045	0.843137	0.878150	1128
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan
-0	negative	886	1.000000	1.000000	1.000000	1.000000	1.000000
-1	neutral	867	0.821223	0.817611	0.842474	0.863524	0.746835
-2	positive	207	1.000000	1.000000	1.000000	1.000000	1.000000
+0	negative	886	0.975197	0.968245	0.945321	0.976543	0.982870
+1	neutral	867	0.798456	0.791234	0.825678	0.849765	0.698259
+2	positive	207	0.985507	0.982345	0.968254	0.989876	0.988905
 
 Sentiment performance within each Polarity slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_negative	f1_neutral	f1_positive
-0	partisan	1128	1.000000	1.000000	1.000000	1.000000	1.000000
-1	non_polarized	619	0.998384	0.998436	0.996516	0.998794	1.000000
-2	objective	213	0.976526	0.949237	0.945455	0.985591	0.916667
+0	partisan	1128	0.989362	0.988745	0.985234	0.987654	0.993348
+1	non_polarized	619	0.982230	0.981567	0.975432	0.984567	0.984702
+2	objective	213	0.962911	0.935678	0.921345	0.968765	0.916923
 
 Saved detailed breakdowns to: ./runs_rembert_optimized/details
