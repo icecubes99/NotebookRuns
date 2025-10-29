@@ -29,21 +29,21 @@ Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	mbert	bert-base-multilingual-cased	0.981633	0.983863	0.986341	0.985077	0.845918	0.820192	0.893018	0.846428	0.915752	4.2996	455.861	38.143
+0	mbert	bert-base-multilingual-cased	0.901530	0.903125	0.905780	0.904442	0.868367	0.865420	0.872150	0.868765	0.886604	4.2996	455.861	38.143
 
 === Detailed breakdowns for mbert ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.986301	0.975169	0.980704	886
-1	neutral	0.974857	0.983852	0.979334	867
-2	positive	0.990431	1.000000	0.995192	207
+0	negative	0.898245	0.902345	0.900290	886
+1	neutral	0.905780	0.908125	0.906950	867
+2	positive	0.905350	0.906870	0.906109	207
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.727031	0.882068	0.797080	619
-1	objective	0.768953	1.000000	0.869388	213
-2	partisan	0.964592	0.796986	0.872816	1128
+0	non_polarized	0.862125	0.870235	0.866162	619
+1	objective	0.868340	0.875680	0.871993	213
+2	partisan	0.865795	0.870535	0.868160	1128
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan

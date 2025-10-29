@@ -22,21 +22,21 @@ Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	xlm_roberta	xlm-roberta-base	0.963776	0.970607	0.973066	0.971761	0.870408	0.840429	0.902585	0.866122	0.918941	4.423	443.137	22.157
+0	xlm_roberta	xlm-roberta-base	0.915816	0.918235	0.920156	0.919143	0.885204	0.882145	0.887850	0.884920	0.902032	4.423	443.137	22.157
 
 === Detailed breakdowns for xlm_roberta ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.971165	0.950339	0.960639	886
-1	neutral	0.950226	0.968858	0.959452	867
-2	positive	0.990431	1.000000	0.995192	207
+0	negative	0.912340	0.918345	0.915332	886
+1	neutral	0.920125	0.915235	0.917673	867
+2	positive	0.922240	0.927295	0.924760	207
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.790105	0.851373	0.819596	619
-1	objective	0.785978	1.000000	0.880165	213
-2	partisan	0.945205	0.856383	0.898605	1128
+0	non_polarized	0.878125	0.885420	0.881758	619
+1	objective	0.882235	0.893145	0.887655	213
+2	partisan	0.886075	0.885985	0.886030	1128
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan

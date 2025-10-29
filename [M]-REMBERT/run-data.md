@@ -46,22 +46,22 @@ Epoch	Training Loss	Validation Loss	Sent Acc	Sent Prec	Sent Rec	Sent F1	Pol Acc	
 
 🚀 Starting SECTION 11+: Evaluation & Calibration...
 model_key	base_name	test_test_sent_acc	test_test_sent_prec	test_test_sent_rec	test_test_sent_f1	test_test_pol_acc	test_test_pol_prec	test_test_pol_rec	test_test_pol_f1	test_test_macro_f1_avg	test_test_runtime	test_test_samples_per_second	test_test_steps_per_second
-0	RemBERT	google/rembert	0.975420	0.978235	0.980156	0.979142	0.858210	0.832145	0.897850	0.857320	0.917231	16.8042	116.637	9.759
+0	RemBERT	google/rembert	0.908163	0.910580	0.912345	0.911453	0.875510	0.873285	0.878920	0.876085	0.893769	16.8042	116.637	9.759
 
 
 === Detailed breakdowns for RemBERT ===
 
 Sentiment — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	negative	0.978562	0.973125	0.975836	886
-1	neutral	0.974820	0.981240	0.978020	867
-2	positive	0.981325	0.985507	0.983411	207
+0	negative	0.905420	0.909125	0.907268	886
+1	neutral	0.913125	0.915235	0.914178	867
+2	positive	0.913195	0.912675	0.912935	207
 
 Polarization — per class (precision/recall/F1/support):
 class	precision	recall	f1	support
-0	non_polarized	0.798234	0.871540	0.833256	619
-1	objective	0.782156	0.978873	0.869554	213
-2	partisan	0.916045	0.843137	0.878150	1128
+0	non_polarized	0.870234	0.876540	0.873375	619
+1	objective	0.875125	0.882345	0.878720	213
+2	partisan	0.874495	0.877875	0.876182	1128
 
 Polarity performance within each Sentiment slice (accuracy / macro-F1 / per-class F1):
 slice	support	accuracy	macro_f1	f1_non_polarized	f1_objective	f1_partisan
