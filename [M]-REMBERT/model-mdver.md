@@ -1,16 +1,19 @@
 # SECTION 1
 
 ```python
-# ============================================================================
+# 
 # SECTION 1: ENVIRONMENT SETUP (ROBUST, PY3.12-FRIENDLY)
 # ============================================================================
 
 import sys, subprocess, importlib, os
 
+# Disable external loggers that may prompt during training (e.g., W&B)
+os.environ["WANDB_DISABLED"] = "true"
+
 def pipi(*pkgs):
     # Force reinstall + no cache to avoid stale wheels
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "--force-reinstall", "--no-cache-dir", *pkgs])
-
+============================================================================
 print("Installing pinned, compatible versions …")
 # Torch: keep your existing CUDA build. If you don't have torch yet, uncomment the torch trio below.
 # pipi("torch==2.2.2", "torchaudio==2.2.2", "torchvision==0.17.2")
@@ -1038,13 +1041,23 @@ class MultiTaskTrainer(Trainer):
     def save_model(self, output_dir: str = None, _internal_call: bool = False):
         output_dir = output_dir or self.args.output_dir
         os.makedirs(output_dir, exist_ok=True)
-        try:
-            self.model.save_pretrained(output_dir, safe_serialization=False)
-        except TypeError:
-            # Older/variant signatures: fall back to default save_pretrained
-            self.model.save_pretrained(output_dir)
-        if getattr(self, 'tokenizer', None) is not None:
-            self.tokenizer.save_pretrained(output_dir)
+        # If the model exposes save_pretrained (HF PreTrainedModel), prefer that with safe_serialization disabled.
+        if hasattr(self.model, "save_pretrained"):
+            try:
+                self.model.save_pretrained(output_dir, safe_serialization=False)
+            except TypeError:
+                # Older/variant signatures: fall back to default call
+                self.model.save_pretrained(output_dir)
+        else:
+            # Generic torch.nn.Module fallback
+            import torch
+            torch.save(self.model.state_dict(), os.path.join(output_dir, "pytorch_model.bin"))
+        # Save tokenizer if available
+        if getattr(self, "tokenizer", None) is not None:
+            try:
+                self.tokenizer.save_pretrained(output_dir)
+            except Exception:
+                pass
 
 
     # ----- LLRD optimizer -----
