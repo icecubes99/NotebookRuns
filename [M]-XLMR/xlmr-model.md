@@ -1487,3 +1487,64 @@ for key in MODELS_TO_RUN:
 timer.end_section("SECTION 11+: Evaluation & Calibration")
 timer.get_summary()
 ```
+# SECTION 13
+
+```py
+# SECTION 13 — Batch Inference on CSV
+import torch
+import pandas as pd
+from torch.utils.data import DataLoader
+from transformers import AutoTokenizer
+
+INFERENCE_CSV = "/content/new_comments.csv"   # ← update with your file path
+BATCH_SIZE_INFER = 64
+
+# Load data
+infer_df = pd.read_csv(INFERENCE_CSV).dropna(subset=[TITLE_COL, TEXT_COL]).reset_index(drop=True)
+print(f"Loaded {len(infer_df)} rows for inference.")
+
+# Load tokenizer and trained model
+tokenizer = AutoTokenizer.from_pretrained(os.path.join(OUT_DIR, "xlm_roberta"))
+model_path = os.path.join(OUT_DIR, "xlm_roberta", "pytorch_model.bin")
+model = MultiTaskModel(MODEL_CONFIGS["xlm_roberta"]["name"], num_sent_classes, num_pol_classes, dropout=HEAD_DROPOUT)
+model.load_state_dict(torch.load(model_path, map_location=device))
+model.to(device)
+model.eval()
+
+# Dataset/DataLoader
+infer_ds = TaglishDataset(
+    infer_df[TITLE_COL].tolist(),
+    infer_df[TEXT_COL].tolist(),
+    y_sent=[0] * len(infer_df),   # dummy labels ignored at inference
+    y_pol=[0] * len(infer_df),
+    tokenizer=tokenizer,
+    max_length=MAX_LENGTH,
+)
+collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
+loader = DataLoader(infer_ds, batch_size=BATCH_SIZE_INFER, shuffle=False, collate_fn=collator)
+
+all_sent_logits, all_pol_logits = [], []
+with torch.no_grad():
+    for batch in loader:
+        inputs = {k: v.to(device) for k, v in batch.items() if "labels" not in k}
+        sent_batch, pol_batch = model(**inputs)["logits"]
+        all_sent_logits.append(sent_batch.cpu())
+        all_pol_logits.append(pol_batch.cpu())
+
+sent_logits = torch.cat(all_sent_logits).numpy()
+pol_logits = torch.cat(all_pol_logits).numpy()
+
+sent_preds = sent_logits.argmax(axis=1)
+pol_preds = pol_logits.argmax(axis=1)
+
+# Map back to label names using the label maps saved during training
+with open(os.path.join(OUT_DIR, "label_map_sentiment.json")) as f:
+    idx2sent = {int(k): v for k, v in json.load(f).items()}
+with open(os.path.join(OUT_DIR, "label_map_polarization.json")) as f:
+    idx2pol = {int(k): v for k, v in json.load(f).items()}
+
+infer_df["Predicted Sentiment"] = [idx2sent[i] for i in sent_preds]
+infer_df["Predicted Polarization"] = [idx2pol[i] for i in pol_preds]
+infer_df.to_csv(os.path.join(OUT_DIR, "inference_results.csv"), index=False)
+print("Saved predictions to:", os.path.join(OUT_DIR, "inference_results.csv"))
+```
